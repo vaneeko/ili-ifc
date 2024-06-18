@@ -2,41 +2,41 @@ import xml.etree.ElementTree as ET
 import logging
 
 def get_default_values():
-    # Prompt user for default values
-    logging.info("Requesting default values from the user.")
+    logging.info("Default-Werte werden gesetzt.")
     
-    while True:
-        try:
-            default_sohlenkote = float(input("Geben Sie einen Standardwert für unbekannte Sohlenkoten von Abwasserknoten ein (in Metern): "))
-            break
-        except ValueError:
-            print("Ungültige Eingabe. Bitte geben Sie eine Zahl ein.")
+    # Setze Standardwerte
+    default_sohlenkote = 100.0
+    default_durchmesser = 2.0
+    default_hoehe = 3.0
 
-    while True:
-        try:
-            default_durchmesser = float(input("Standardwert für Abwasserschächte mit unbekanntem Durchmesser (in Metern): "))
-            default_hoehe = float(input("Standardwert für Abwasserschächte mit unbekannter Höhe (in Metern): "))
-            break
-        except ValueError:
-            print("Ungültige Eingabe. Bitte geben Sie Zahlen ein.")
+    # Frage den Benutzer nach neuen Werten oder bestätige Standardwerte
+    try:
+        new_sohlenkote = input(f"Standardwert für unbekannte Sohlenkoten von Abwasserknoten ({default_sohlenkote}m): ")
+        if new_sohlenkote.strip():
+            default_sohlenkote = float(new_sohlenkote)
+    except ValueError:
+        print("Ungültige Eingabe. Behalte den Standardwert.")
 
-    while True:
-        try:
-            zusatz_hoehe_haltpunkt = float(input("Geben Sie einen Z-Wert für die Höhe der Haltungspunkte ein die zur Sohlenhöhe aufadiert wird (in Metern): "))
-            break
-        except ValueError:
-            print("Ungültige Eingabe. Bitte geben Sie eine Zahl ein.")
+    try:
+        new_durchmesser = input(f"Standardwert für Durchmesser von Abwasserschächten ({default_durchmesser}m): ")
+        if new_durchmesser.strip():
+            default_durchmesser = float(new_durchmesser)
+    except ValueError:
+        print("Ungültige Eingabe. Behalte den Standardwert.")
+
+    try:
+        new_hoehe = input(f"Standardwert für Höhen von Abwasserschächten ({default_hoehe}m): ")
+        if new_hoehe.strip():
+            default_hoehe = float(new_hoehe)
+    except ValueError:
+        print("Ungültige Eingabe. Behalte den Standardwert.")
 
     einfaerben = input("Möchten Sie bei fehlenden Werten die IFC-Elemente einfärben? (Ja/Nein, Standard: Nein): ").strip().lower()
-    if einfaerben in ["ja", "j"]:
-        einfaerben = True
-    else:
-        einfaerben = False
+    einfaerben = einfaerben in ["ja", "j"]
 
-    return default_sohlenkote, default_durchmesser, default_hoehe, zusatz_hoehe_haltpunkt, einfaerben
+    return default_sohlenkote, default_durchmesser, default_hoehe, einfaerben
 
-def parse_abwasserknoten(root, namespace, default_sohlenkote, zusatz_hoehe_haltpunkt, default_durchmesser, default_hoehe):
-    # Parse sewer nodes from XML
+def parse_abwasserknoten(root, namespace, default_sohlenkote, default_durchmesser, default_hoehe):
     logging.info("Starting to parse sewer nodes.")
     abwasserknoten_data = []
     haltungspunkt_sohlenkoten = {}
@@ -62,13 +62,6 @@ def parse_abwasserknoten(root, namespace, default_sohlenkote, zusatz_hoehe_haltp
                     sohlenkote = float(sohlenkote_element.text)
                 except ValueError:
                     logging.warning(f"Warnung: Ungültige Sohlenkote für Abwasserknoten {abwasserknoten.get('TID')}: {sohlenkote_element.text}")
-            elif sohlenkote == 0.0:
-                while True:
-                    try:
-                        sohlenkote = float(input(f"Geben Sie die Sohlenkote für Abwasserknoten {abwasserknoten.get('TID')} ein (in Metern): "))
-                        break
-                    except ValueError:
-                        logging.error("Ungültige Eingabe. Bitte geben Sie eine Zahl ein.")
 
             dimension1 = abwasserknoten.find('ili:Dimension1', namespace)
             dimension2 = abwasserknoten.find('ili:Dimension2', namespace)
@@ -141,8 +134,7 @@ def parse_kanale(root, namespace):
 
     return kanale, nicht_verarbeitete_kanale
 
-def parse_haltungspunkte(root, namespace, default_sohlenkote, zusatz_hoehe_haltpunkt):
-    # Parse halt points from XML
+def parse_haltungspunkte(root, namespace, default_sohlenkote):
     haltungspunkte = []
     for element in root.findall('.//ili:DSS_2020_LV95.Siedlungsentwaesserung.Haltungspunkt', namespace):
         try:
@@ -153,7 +145,7 @@ def parse_haltungspunkte(root, namespace, default_sohlenkote, zusatz_hoehe_haltp
             if c1 is not None and c2 is not None:
                 c1_text = c1.text if c1.text is not None else "0"
                 c2_text = c2.text if c2.text is not None else "0"
-                z_text = float(kote.text) if kote is not None and kote.text is not None else default_sohlenkote + zusatz_hoehe_haltpunkt
+                z_text = float(kote.text) if kote is not None and kote.text is not None else default_sohlenkote
 
                 haltungspunkte.append({
                     'id': element.get('TID'),
@@ -167,12 +159,12 @@ def parse_haltungspunkte(root, namespace, default_sohlenkote, zusatz_hoehe_haltp
             print(f"Fehler beim Parsen des Haltungspunkts {element.get('TID')}: {e}")
     return haltungspunkte
 
+
 def transform_coordinate(coordinate):
     # Transform coordinate if necessary
     return float(coordinate)
 
-def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote, zusatz_hoehe_haltpunkt):
-    # Parse haltung elements from XML
+def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote):
     haltungen = []
     nicht_verarbeitete_haltungen = []
 
@@ -221,29 +213,26 @@ def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote, zusatz_
     
     return haltungen, nicht_verarbeitete_haltungen
 
-def parse_xtf(xtf_file_path, default_sohlenkote, zusatz_hoehe_haltpunkt, default_durchmesser, default_hoehe):
-    # Parse XTF file
-    logging.info(f"Starte das Parsing der XTF-Datei: {xtf_file_path}")
-    
-    tree = ET.parse(xtf_file_path)
+def parse_xtf(xtf_file_path, default_sohlenkote, default_durchmesser, default_hoehe, einfaerben):
+    try:
+        tree = ET.parse(xtf_file_path)
+    except ET.ParseError as e:
+        logging.error(f"Fehler beim Parsen der XTF-Datei: {e}")
+        raise
+
     root = tree.getroot()
     namespace = {'ili': 'http://www.interlis.ch/INTERLIS2.3'}
-    
-    haltungspunkte = parse_haltungspunkte(root, namespace, default_sohlenkote, zusatz_hoehe_haltpunkt)
-    logging.info(f"Gefundene Haltungspunkte: {len(haltungspunkte)}")
-    
-    abwasserknoten, haltungspunkt_sohlenkoten = parse_abwasserknoten(root, namespace, default_sohlenkote, zusatz_hoehe_haltpunkt, default_durchmesser, default_hoehe)
-    logging.info(f"Verarbeitete Abwasserknoten: {len(abwasserknoten)}")
-    
-    normschachte, nicht_verarbeitete_normschachte = parse_normschachte(root, namespace, abwasserknoten, default_durchmesser, default_hoehe, default_sohlenkote)
-    logging.info(f"Gefundene Normschächte: {len(normschachte)}")
-    
-    kanale, nicht_verarbeitete_kanale = parse_kanale(root, namespace)
-    logging.info(f"Gefundene Kanäle: {len(kanale)}")
-    
-    haltungen, nicht_verarbeitete_haltungen = parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote, zusatz_hoehe_haltpunkt)
-    logging.info(f"Gefundene Haltungen: {len(haltungen)}")
-    
+
+    try:
+        haltungspunkte = parse_haltungspunkte(root, namespace, default_sohlenkote)
+        abwasserknoten, haltungspunkt_sohlenkoten = parse_abwasserknoten(root, namespace, default_sohlenkote, default_durchmesser, default_hoehe)
+        normschachte, nicht_verarbeitete_normschachte = parse_normschachte(root, namespace, abwasserknoten, default_durchmesser, default_hoehe, default_sohlenkote)
+        kanale, nicht_verarbeitete_kanale = parse_kanale(root, namespace)
+        haltungen, nicht_verarbeitete_haltungen = parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote)
+    except Exception as e:
+        logging.error(f"Fehler beim Parsen der Daten: {e}")
+        raise
+
     data = {
         'haltungspunkte': haltungspunkte,
         'abwasserknoten': abwasserknoten,
@@ -253,10 +242,9 @@ def parse_xtf(xtf_file_path, default_sohlenkote, zusatz_hoehe_haltpunkt, default
         'default_durchmesser': default_durchmesser,
         'default_hoehe': default_hoehe,
         'default_sohlenkote': default_sohlenkote,
-        'zusatz_hoehe_haltpunkt': zusatz_hoehe_haltpunkt,
         'nicht_verarbeitete_kanale': nicht_verarbeitete_kanale,
         'nicht_verarbeitete_haltungen': nicht_verarbeitete_haltungen,
         'nicht_verarbeitete_normschachte': nicht_verarbeitete_normschachte
     }
-    
+
     return data

@@ -64,7 +64,6 @@ def add_color(ifc_file, ifc_element, farbe, context):
 def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben):
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
-    zusatz_hoehe_haltpunkt = data['zusatz_hoehe_haltpunkt']
 
     for haltung in haltungen:
         durchmesser = haltung.get('durchmesser', default_durchmesser)
@@ -74,11 +73,11 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
 
         start_x = float(start_point['c1'])
         start_y = float(start_point['c2'])
-        start_z = float(haltung['von_z']) + zusatz_hoehe_haltpunkt + (durchmesser / 2)
+        start_z = float(haltung['von_z']) + (durchmesser / 2)
 
         end_x = float(end_point['c1'])
         end_y = float(end_point['c2'])
-        end_z = float(haltung['nach_z']) + zusatz_hoehe_haltpunkt + (durchmesser / 2)
+        end_z = float(haltung['nach_z']) + (durchmesser / 2)
 
         ifc_local_placement = create_local_placement(ifc_file, [start_x, start_y, start_z], relative_to=facility.ObjectPlacement)
 
@@ -212,7 +211,6 @@ def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_gr
             data['nicht_verarbeitete_normschachte'].append(ns['id'])
 
 def create_ifc(ifc_file_path, data, einfaerben):
-    # Main function to create the IFC file
     logging.info("Erstelle IFC-Datei...")
 
     ifc_file = ifcopenshell.file(schema="IFC4X3")
@@ -224,7 +222,6 @@ def create_ifc(ifc_file_path, data, einfaerben):
     haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
 
     create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben)
-
     create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben)
 
     logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")

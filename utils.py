@@ -1,7 +1,6 @@
 import ifcopenshell
 import ifcopenshell.util.element
 import uuid
-from ifcopenshell.api import run
 
 def generate_guid():
     """Generates a unique GUID."""
