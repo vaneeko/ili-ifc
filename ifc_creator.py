@@ -55,7 +55,6 @@ def add_color(ifc_file, ifc_element, farbe, context):
     styled_item = ifc_file.create_entity("IfcStyledItem", Item=ifc_element.Representation.Representations[0].Items[0], Styles=[surface_style])
 
 def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben):
-    # Create IFC elements for haltungen
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
     zusatz_hoehe_haltpunkt = data['zusatz_hoehe_haltpunkt']
@@ -68,11 +67,11 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
 
         start_x = float(start_point['c1'])
         start_y = float(start_point['c2'])
-        start_z = float(haltung['von_z']) + zusatz_hoehe_haltpunkt
+        start_z = float(haltung['von_z']) + zusatz_hoehe_haltpunkt + (durchmesser / 2)
 
         end_x = float(end_point['c1'])
         end_y = float(end_point['c2'])
-        end_z = float(haltung['nach_z']) + zusatz_hoehe_haltpunkt
+        end_z = float(haltung['nach_z']) + zusatz_hoehe_haltpunkt + (durchmesser / 2)
 
         ifc_local_placement = create_local_placement(ifc_file, [start_x, start_y, start_z], relative_to=facility.ObjectPlacement)
 
@@ -81,7 +80,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
             x = float(point['c1']) - start_x
             y = float(point['c2']) - start_y
             if point.get('kote') and float(point['kote']) != 0:
-                z = float(point['kote'])
+                z = float(point['kote']) + (durchmesser / 2)
             else:
                 if end_x - start_x != 0:
                     z = start_z + (end_z - start_z) * (float(point['c1']) - start_x) / (end_x - start_x)
