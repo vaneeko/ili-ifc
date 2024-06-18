@@ -1,8 +1,8 @@
 # Import necessary modules
 import os
 import logging
-from parser import parse_xtf, get_default_values
-from ifc_creator import create_ifc
+from data_parser import parse_xtf, get_default_values
+from ifc_generator import create_ifc
 
 # Function to set up logging configuration
 def setup_logging():
