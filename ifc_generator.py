@@ -61,7 +61,7 @@ def add_color(ifc_file, ifc_element, farbe, context):
     surface_style = ifc_file.create_entity("IfcSurfaceStyle", Side="BOTH", Styles=[surface_style_rendering])
     styled_item = ifc_file.create_entity("IfcStyledItem", Item=ifc_element.Representation.Representations[0].Items[0], Styles=[surface_style])
 
-def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben):
+def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote):
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
 
@@ -110,8 +110,9 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         ifc_pipe_segment.Representation = product_shape
 
         if einfaerben:
-            missing_count = sum(1 for point in haltung['verlauf'] if point.get('kote') is None or float(point['kote']) == 0)
-            if missing_count == 0:
+            # Prüfe, ob alle Kote-Werte in den Haltungspunkten vorhanden sind
+            if (haltung['von_haltungspunkt']['lage']['z'] != default_sohlenkote and
+                haltung['nach_haltungspunkt']['lage']['z'] != default_sohlenkote):
                 farbe = "Grün"
             else:
                 farbe = "Rot"
@@ -119,7 +120,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         else:
             farbe = "Blau"
             add_color(ifc_file, ifc_pipe_segment, farbe, context)
-            
+
         ifc_file.create_entity("IfcRelContainedInSpatialStructure",
             GlobalId=generate_guid(),
             RelatedElements=[ifc_pipe_segment],
@@ -133,7 +134,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
             RelatedObjects=[ifc_pipe_segment],
             RelatingGroup=haltungen_group
         )
-        
+
 def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, abwasserknoten_group, einfaerben):
     # Create a normschacht element
     lage = abwasserknoten.get('lage', {})
@@ -221,7 +222,9 @@ def create_ifc(ifc_file_path, data, einfaerben):
     abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
     haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
 
-    create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben)
+    default_sohlenkote = data['default_sohlenkote']
+
+    create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote)
     create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben)
 
     logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")
