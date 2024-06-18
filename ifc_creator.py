@@ -3,13 +3,14 @@ import logging
 from utils import generate_guid, add_property_set, create_cartesian_point, create_swept_disk_solid
 
 def create_ifc_project_structure(ifc_file):
+    # Create IFC project structure
     logging.info("Erstelle IFC-Projektstruktur.")
     project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
     context = ifc_file.create_entity("IfcGeometricRepresentationContext", ContextType="Model", ContextIdentifier="Building Model")
     site = ifc_file.create_entity("IfcSite", GlobalId=generate_guid(), Name="Perimeter")
     facility = ifc_file.create_entity("IfcFacility", GlobalId=generate_guid(), Name="Entwässerungsanlage")
     
-    # Gruppen erstellen
+    # Create groups
     abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
     haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
 
@@ -19,9 +20,11 @@ def create_ifc_project_structure(ifc_file):
     return context, facility, abwasserknoten_group, haltungen_group
 
 def create_swept_disk_solid(ifc_file, polyline, radius):
+    # Create swept disk solid entity
     return ifc_file.create_entity("IfcSweptDiskSolid", Directrix=polyline, Radius=radius)
 
 def create_local_placement(ifc_file, point, relative_to=None):
+    # Create local placement for an entity
     ifc_point = ifc_file.create_entity('IfcCartesianPoint', Coordinates=point)
     axis2placement = ifc_file.create_entity('IfcAxis2Placement3D', Location=ifc_point)
 
@@ -33,9 +36,11 @@ def create_local_placement(ifc_file, point, relative_to=None):
     return local_placement
 
 def interpolate_z(start_z, end_z, num_points):
+    # Interpolate Z-values between start and end points
     return [start_z + (end_z - start_z) * i / (num_points - 1) for i in range(num_points)]
 
 def add_color(ifc_file, ifc_element, farbe, context):
+    # Add color to an IFC element
     color_map = {
         "Grün": (0.0, 1.0, 0.0),
         "Orange": (1.0, 0.65, 0.0),
@@ -50,6 +55,7 @@ def add_color(ifc_file, ifc_element, farbe, context):
     styled_item = ifc_file.create_entity("IfcStyledItem", Item=ifc_element.Representation.Representations[0].Items[0], Styles=[surface_style])
 
 def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben):
+    # Create IFC elements for haltungen
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
     zusatz_hoehe_haltpunkt = data['zusatz_hoehe_haltpunkt']
@@ -128,6 +134,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         )
 
 def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, abwasserknoten_group, einfaerben):
+    # Create a normschacht element
     lage = abwasserknoten.get('lage', {})
     x_mitte = float(lage.get('c1'))
     y_mitte = float(lage.get('c2'))
@@ -167,14 +174,14 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
         RelatingStructure=facility
     )
     
-    # Hinzufügen zur Abwasserknoten-Gruppe
+    # Add to abwasserknoten group
     ifc_file.create_entity("IfcRelAssignsToGroup",
         GlobalId=generate_guid(),
         RelatedObjects=[schacht],
         RelatingGroup=abwasserknoten_group
     )
 
-    # Einfärbung hinzufügen
+    # Add color to normschacht
     if einfaerben:
         fehlende_werte = sum([1 for key in ['dimension1', 'dimension2'] if ns.get(key) is None or ns.get(key) == '0'])
         if abwasserknoten is None or abwasserknoten.get('kote') is None or float(abwasserknoten.get('kote', 0)) == 0:
@@ -192,6 +199,7 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
         add_color(ifc_file, schacht, farbe, context)
     
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
+    # Create IFC elements for normschachte
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
         abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
@@ -202,6 +210,7 @@ def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_gr
             data['nicht_verarbeitete_normschachte'].append(ns['id'])
 
 def create_ifc(ifc_file_path, data, einfaerben):
+    # Main function to create the IFC file
     logging.info("Erstelle IFC-Datei...")
 
     ifc_file = ifcopenshell.file(schema="IFC4X3")

@@ -2,7 +2,9 @@ import xml.etree.ElementTree as ET
 import logging
 
 def get_default_values():
-    logging.info("Frage Standardwerte vom Benutzer ab.")
+    # Prompt user for default values
+    logging.info("Requesting default values from the user.")
+    
     while True:
         try:
             default_sohlenkote = float(input("Geben Sie einen Standardwert für unbekannte Sohlenkoten von Abwasserknoten ein (in Metern): "))
@@ -34,14 +36,14 @@ def get_default_values():
     return default_sohlenkote, default_durchmesser, default_hoehe, zusatz_hoehe_haltpunkt, einfaerben
 
 def parse_abwasserknoten(root, namespace, default_sohlenkote, zusatz_hoehe_haltpunkt, default_durchmesser, default_hoehe):
-    logging.info("Beginne mit dem Parsen der Abwasserknoten.")
+    # Parse sewer nodes from XML
+    logging.info("Starting to parse sewer nodes.")
     abwasserknoten_data = []
     haltungspunkt_sohlenkoten = {}
 
     for abwasserknoten in root.findall('.//ili:DSS_2020_LV95.Siedlungsentwaesserung.Abwasserknoten', namespace):
         try:
             haltungspunkt_ref = abwasserknoten.find('ili:Lage/ili:COORD', namespace)
-
             if haltungspunkt_ref is None:
                 logging.error(f"Fehler: Abwasserknoten {abwasserknoten.get('TID')} hat keine Koordinaten.")
                 continue
@@ -49,7 +51,7 @@ def parse_abwasserknoten(root, namespace, default_sohlenkote, zusatz_hoehe_haltp
             c1 = haltungspunkt_ref.find('ili:C1', namespace).text
             c2 = haltungspunkt_ref.find('ili:C2', namespace).text
 
-            # Transformation der Koordinaten falls nötig
+            # Transform coordinates if necessary
             c1_transformed = transform_coordinate(c1)
             c2_transformed = transform_coordinate(c2)
 
@@ -94,7 +96,8 @@ def parse_abwasserknoten(root, namespace, default_sohlenkote, zusatz_hoehe_haltp
     return abwasserknoten_data, haltungspunkt_sohlenkoten
 
 def parse_normschachte(root, namespace, abwasserknoten_data, default_durchmesser, default_hoehe, default_sohlenkote):
-    logging.info("Beginne mit dem Parsen der Normschächte.")
+    # Parse norm shafts from XML
+    logging.info("Starting to parse norm shafts.")
     normschachte = []
     nicht_verarbeitete_normschachte = []
 
@@ -118,7 +121,8 @@ def parse_normschachte(root, namespace, abwasserknoten_data, default_durchmesser
     return normschachte, nicht_verarbeitete_normschachte
 
 def parse_kanale(root, namespace):
-    logging.info("Beginne mit dem Parsen der Kanäle.")
+    # Parse channels from XML
+    logging.info("Starting to parse channels.")
     kanale = []
     nicht_verarbeitete_kanale = []
 
@@ -138,6 +142,7 @@ def parse_kanale(root, namespace):
     return kanale, nicht_verarbeitete_kanale
 
 def parse_haltungspunkte(root, namespace, default_sohlenkote, zusatz_hoehe_haltpunkt):
+    # Parse halt points from XML
     haltungspunkte = []
     for element in root.findall('.//ili:DSS_2020_LV95.Siedlungsentwaesserung.Haltungspunkt', namespace):
         try:
@@ -163,11 +168,11 @@ def parse_haltungspunkte(root, namespace, default_sohlenkote, zusatz_hoehe_haltp
     return haltungspunkte
 
 def transform_coordinate(coordinate):
-    # Hier eine einfache Transformation, falls nötig
-    # Dies kann an spezifische Anforderungen angepasst werden
+    # Transform coordinate if necessary
     return float(coordinate)
-    
+
 def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote, zusatz_hoehe_haltpunkt):
+    # Parse haltung elements from XML
     haltungen = []
     nicht_verarbeitete_haltungen = []
 
@@ -217,6 +222,7 @@ def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote, zusatz_
     return haltungen, nicht_verarbeitete_haltungen
 
 def parse_xtf(xtf_file_path, default_sohlenkote, zusatz_hoehe_haltpunkt, default_durchmesser, default_hoehe):
+    # Parse XTF file
     logging.info(f"Starte das Parsing der XTF-Datei: {xtf_file_path}")
     
     tree = ET.parse(xtf_file_path)
