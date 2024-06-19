@@ -1,6 +1,7 @@
 import ifcopenshell
 import logging
 from utils import generate_guid, add_property_set, create_cartesian_point, create_swept_disk_solid
+
 import math
 
 def create_ifc_project_structure(ifc_file):
@@ -73,23 +74,30 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
 
         start_x = float(start_point['c1'])
         start_y = float(start_point['c2'])
-        start_z = float(haltung['von_z']) + (durchmesser / 2)
+        start_z = float(haltung['von_z']) if haltung['von_z'] != 0.0 else default_sohlenkote
 
         end_x = float(end_point['c1'])
         end_y = float(end_point['c2'])
-        end_z = float(haltung['nach_z']) + (durchmesser / 2)
+        end_z = float(haltung['nach_z']) if haltung['nach_z'] != 0.0 else default_sohlenkote
+
+        start_z += (durchmesser / 2)
+        end_z += (durchmesser / 2)
 
         ifc_local_placement = create_local_placement(ifc_file, [start_x, start_y, start_z], relative_to=facility.ObjectPlacement)
 
-        polyline_3d = []
-        for point in haltung['verlauf']:
-            x = float(point['c1']) - start_x
-            y = float(point['c2']) - start_y
-            if point.get('kote') and float(point['kote']) != 0:
-                z = float(point['kote']) + (durchmesser / 2)
-            else:
-                z = interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, float(point['c1']), float(point['c2'])) - start_z
-            polyline_3d.append([x, y, z])
+        if 'verlauf' in haltung and haltung['verlauf']:
+            polyline_3d = []
+            for point in haltung['verlauf']:
+                x = float(point['c1']) - start_x
+                y = float(point['c2']) - start_y
+                z = float(point['kote']) if point.get('kote') and float(point['kote']) != 0 else interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, float(point['c1']), float(point['c2'])) - start_z
+                polyline_3d.append([x, y, z])
+        else:
+            # Polyline aus den Haltungspunkten erstellen
+            polyline_3d = [
+                [0.0, 0.0, 0.0],  # Startpunkt
+                [end_x - start_x, end_y - start_y, end_z - start_z]  # Endpunkt
+            ]
 
         ifc_polyline = ifc_file.create_entity('IfcPolyline', Points=[create_cartesian_point(ifc_file, p) for p in polyline_3d])
 
@@ -110,9 +118,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         ifc_pipe_segment.Representation = product_shape
 
         if einfaerben:
-            # Prüfe, ob alle Kote-Werte in den Haltungspunkten vorhanden sind
-            if (haltung['von_haltungspunkt']['lage']['z'] != default_sohlenkote and
-                haltung['nach_haltungspunkt']['lage']['z'] != default_sohlenkote):
+            if start_z != default_sohlenkote and end_z != default_sohlenkote:
                 farbe = "Grün"
             else:
                 farbe = "Rot"
@@ -135,8 +141,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
             RelatingGroup=haltungen_group
         )
 
-def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, abwasserknoten_group, einfaerben):
-    # Create a normschacht element with more detailed geometry
+def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, default_wanddicke, default_bodendicke, abwasserknoten_group, einfaerben):
     lage = abwasserknoten.get('lage', {})
     x_mitte = float(lage.get('c1'))
     y_mitte = float(lage.get('c2'))
@@ -144,7 +149,8 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     tiefe = float(ns['dimension2']) / 1000.0 if ns['dimension2'] != '0' else default_hoehe
     radius = breite / 2
     hoehe = tiefe
-    wanddicke = 0.05
+    wanddicke = default_wanddicke
+    bodendicke = default_bodendicke
 
     kote = abwasserknoten.get('kote')
     z_mitte = float(kote) if kote and float(kote) != 0 else default_sohlenkote
@@ -155,33 +161,26 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     ifc_local_placement = ifc_file.create_entity("IfcLocalPlacement", RelativePlacement=axis_placement)
 
     if breite <= 2 * wanddicke:
-        # Create a simple filled cylinder for small shafts
         profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
         body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=profile, ExtrudedDirection=axis, Depth=hoehe)
         items = [body]
     else:
-        # Create the outer cylindrical part
         outer_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
         outer_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=outer_profile, ExtrudedDirection=axis, Depth=hoehe)
 
-        # Create the inner cylindrical part (empty space inside the shaft)
-        inner_radius = radius - wanddicke  # Assume wall thickness of 0.05m
+        inner_radius = radius - wanddicke
         inner_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=inner_radius)
         inner_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=inner_profile, ExtrudedDirection=axis, Depth=hoehe)
 
-        # Combine outer and inner bodies to create the detailed shaft geometry
         boolean_result = ifc_file.create_entity("IfcBooleanResult", Operator="DIFFERENCE", FirstOperand=outer_body, SecondOperand=inner_body)
 
-        # Create the bottom part of the shaft
         bottom_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=inner_radius)
-        bottom_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=bottom_profile, ExtrudedDirection=axis, Depth=wanddicke)
+        bottom_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=bottom_profile, ExtrudedDirection=axis, Depth=bodendicke)
 
-        # Position the bottom at the base of the shaft
-        bottom_placement = create_local_placement(ifc_file, [x_mitte, y_mitte, z_mitte - wanddicke])
+        bottom_placement = create_local_placement(ifc_file, [x_mitte, y_mitte, z_mitte - bodendicke])
         
         items = [boolean_result, bottom_body]
 
-    # Create the normschacht element with detailed geometry
     schacht = ifc_file.create_entity("IfcDistributionChamberElement",
         GlobalId=generate_guid(),
         Name=ns.get('bezeichnung', 'Normschacht'),
@@ -203,14 +202,12 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
         RelatingStructure=facility
     )
 
-    # Add to abwasserknoten group
     ifc_file.create_entity("IfcRelAssignsToGroup",
         GlobalId=generate_guid(),
         RelatedObjects=[schacht],
         RelatingGroup=abwasserknoten_group
     )
 
-    # Add color to normschacht
     if einfaerben:
         fehlende_werte = sum([1 for key in ['dimension1', 'dimension2'] if ns.get(key) is None or ns.get(key) == '0'])
         if abwasserknoten is None or abwasserknoten.get('kote') is None or float(abwasserknoten.get('kote', 0)) == 0:
@@ -226,19 +223,36 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     else:
         farbe = "Blau"
         add_color(ifc_file, schacht, farbe, context)
- 
+
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
-    # Create IFC elements for normschachte
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
         abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
         if abwasserknoten:
-            create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], abwasserknoten_group, einfaerben)
+            create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben)
         else:
             logging.error(f"Fehler: Normschacht {ns.get('id', 'Unbekannt')} oder zugehöriger Abwasserknoten hat keine Koordinaten.")
             data['nicht_verarbeitete_normschachte'].append(ns['id'])
 
 def create_ifc(ifc_file_path, data, einfaerben):
+    logging.info("Erstelle IFC-Datei...")
+
+    ifc_file = ifcopenshell.file(schema="IFC4X3")
+
+    context, facility = create_ifc_project_structure(ifc_file)
+
+    abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
+    haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
+
+    default_sohlenkote = data['default_sohlenkote']
+
+    create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote)
+    create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben)
+
+    logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")
+    ifc_file.write(ifc_file_path)
+    logging.info("IFC-Datei erfolgreich erstellt.")
+
     logging.info("Erstelle IFC-Datei...")
 
     ifc_file = ifcopenshell.file(schema="IFC4X3")
