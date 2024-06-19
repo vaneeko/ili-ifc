@@ -144,6 +144,7 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     tiefe = float(ns['dimension2']) / 1000.0 if ns['dimension2'] != '0' else default_hoehe
     radius = breite / 2
     hoehe = tiefe
+    wanddicke = 0.05
 
     kote = abwasserknoten.get('kote')
     z_mitte = float(kote) if kote and float(kote) != 0 else default_sohlenkote
@@ -153,17 +154,32 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     axis_placement = ifc_file.create_entity("IfcAxis2Placement3D", Location=base_center, Axis=axis)
     ifc_local_placement = ifc_file.create_entity("IfcLocalPlacement", RelativePlacement=axis_placement)
 
-    # Create the outer cylindrical part
-    outer_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
-    outer_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=outer_profile, ExtrudedDirection=axis, Depth=hoehe)
+    if breite <= 2 * wanddicke:
+        # Create a simple filled cylinder for small shafts
+        profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
+        body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=profile, ExtrudedDirection=axis, Depth=hoehe)
+        items = [body]
+    else:
+        # Create the outer cylindrical part
+        outer_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
+        outer_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=outer_profile, ExtrudedDirection=axis, Depth=hoehe)
 
-    # Create the inner cylindrical part (empty space inside the shaft)
-    inner_radius = radius - 0.05  # Assume wall thickness of 0.05m
-    inner_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=inner_radius)
-    inner_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=inner_profile, ExtrudedDirection=axis, Depth=hoehe)
+        # Create the inner cylindrical part (empty space inside the shaft)
+        inner_radius = radius - wanddicke  # Assume wall thickness of 0.05m
+        inner_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=inner_radius)
+        inner_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=inner_profile, ExtrudedDirection=axis, Depth=hoehe)
 
-    # Combine outer and inner bodies to create the detailed shaft geometry
-    boolean_result = ifc_file.create_entity("IfcBooleanResult", Operator="DIFFERENCE", FirstOperand=outer_body, SecondOperand=inner_body)
+        # Combine outer and inner bodies to create the detailed shaft geometry
+        boolean_result = ifc_file.create_entity("IfcBooleanResult", Operator="DIFFERENCE", FirstOperand=outer_body, SecondOperand=inner_body)
+
+        # Create the bottom part of the shaft
+        bottom_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=inner_radius)
+        bottom_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=bottom_profile, ExtrudedDirection=axis, Depth=wanddicke)
+
+        # Position the bottom at the base of the shaft
+        bottom_placement = create_local_placement(ifc_file, [x_mitte, y_mitte, z_mitte - wanddicke])
+        
+        items = [boolean_result, bottom_body]
 
     # Create the normschacht element with detailed geometry
     schacht = ifc_file.create_entity("IfcDistributionChamberElement",
@@ -175,7 +191,7 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
                 ContextOfItems=context,
                 RepresentationIdentifier="Body",
                 RepresentationType="SweptSolid",
-                Items=[boolean_result]
+                Items=items
             )]
         )
     )
@@ -210,7 +226,7 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     else:
         farbe = "Blau"
         add_color(ifc_file, schacht, farbe, context)
-   
+ 
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
     # Create IFC elements for normschachte
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
