@@ -21,8 +21,8 @@ def main():
     logging.info(f"IFC-Dateipfad: {ifc_file_path}")
 
     try:
-        default_sohlenkote, default_durchmesser, default_hoehe, einfaerben = get_default_values()
-        xtf_data = parse_xtf(xtf_file_path, default_sohlenkote, default_durchmesser, default_hoehe, einfaerben)
+        default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, einfaerben = get_default_values()
+        xtf_data = parse_xtf(xtf_file_path, default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, einfaerben)
         create_ifc(ifc_file_path, xtf_data, einfaerben)
     except Exception as e:
         logging.error(f"Fehler: {e}", exc_info=True)
