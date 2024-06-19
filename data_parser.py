@@ -2,7 +2,11 @@ import xml.etree.ElementTree as ET
 import logging
 from default_values import get_default_values
 
-
+def get_element_text(element, tag, namespace):
+    found_element = element.find(tag, namespace)
+    if found_element is not None and found_element.text is not None:
+        return found_element.text
+    return ''
 
 def parse_abwasserknoten(root, namespace, default_sohlenkote, default_durchmesser, default_hoehe):
     logging.info("Starting to parse sewer nodes.")
@@ -63,7 +67,6 @@ def parse_abwasserknoten(root, namespace, default_sohlenkote, default_durchmesse
     return abwasserknoten_data, haltungspunkt_sohlenkoten
 
 def parse_normschachte(root, namespace, abwasserknoten_data, default_durchmesser, default_hoehe, default_sohlenkote):
-    # Parse norm shafts from XML
     logging.info("Starting to parse norm shafts.")
     normschachte = []
     nicht_verarbeitete_normschachte = []
@@ -84,8 +87,12 @@ def parse_normschachte(root, namespace, abwasserknoten_data, default_durchmesser
                     'abwasserknoten_id': abwasserknoten_id,
                     'lage': abwasserknoten['lage'],
                     'kote': abwasserknoten['kote'],
-                    'dimension1': ns.find('ili:Dimension1', namespace).text if ns.find('ili:Dimension1', namespace).text != '0' else str(default_durchmesser * 1000),
-                    'dimension2': ns.find('ili:Dimension2', namespace).text if ns.find('ili:Dimension2', namespace).text != '0' else str(default_hoehe * 1000)
+                    'dimension1': get_element_text(ns, 'ili:Dimension1', namespace) if get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
+                    'dimension2': get_element_text(ns, 'ili:Dimension2', namespace) if get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                    'bezeichnung': get_element_text(ns, 'ili:Bezeichnung', namespace),
+                    'standortname': get_element_text(ns, 'ili:Standortname', namespace),
+                    'funktion': get_element_text(ns, 'ili:Funktion', namespace),
+                    'material': get_element_text(ns, 'ili:Material', namespace)
                 })
             else:
                 print(f"Normschacht {ns.get('TID')} hat keinen zugehörigen Abwasserknoten")
@@ -94,7 +101,6 @@ def parse_normschachte(root, namespace, abwasserknoten_data, default_durchmesser
     return normschachte, nicht_verarbeitete_normschachte
 
 def parse_kanale(root, namespace):
-    # Parse channels from XML
     logging.info("Starting to parse channels.")
     kanale = []
     nicht_verarbeitete_kanale = []
@@ -153,7 +159,6 @@ def parse_haltungspunkte(root, namespace, default_sohlenkote):
     return haltungspunkte
 
 def transform_coordinate(coordinate):
-    # Transform coordinate if necessary
     return float(coordinate)
 
 def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote):
@@ -170,7 +175,12 @@ def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote):
             try:
                 bezeichnung = haltung.find('ili:Bezeichnung', namespace).text
                 lichte_hoehe_element = haltung.find('ili:Lichte_Hoehe', namespace)
-                durchmesser = float(lichte_hoehe_element.text) / 1000.0 if lichte_hoehe_element is not None else 0.5
+                laenge_effektiv = haltung.find('ili:LaengeEffektiv', namespace)
+                material = haltung.find('ili:Material', namespace)
+                
+                lichte_hoehe = float(lichte_hoehe_element.text) / 1000.0 if lichte_hoehe_element is not None else 0.5
+                laenge_effektiv = float(laenge_effektiv.text) if laenge_effektiv is not None else 0.0
+                material = material.text if material is not None else ""
 
                 verlauf = []
                 polyline_element = haltung.find('ili:Verlauf/ili:POLYLINE', namespace)
@@ -196,7 +206,9 @@ def parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote):
                     haltungen.append({
                         'id': haltung.get('TID'),
                         'bezeichnung': bezeichnung,
-                        'durchmesser': durchmesser,
+                        'durchmesser': lichte_hoehe,
+                        'material': material,
+                        'length': laenge_effektiv,
                         'verlauf': verlauf,
                         'von_haltungspunkt': von_haltungspunkt,
                         'nach_haltungspunkt': nach_haltungspunkt,
