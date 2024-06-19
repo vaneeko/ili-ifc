@@ -251,23 +251,3 @@ def create_ifc(ifc_file_path, data, einfaerben):
 
     logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")
     ifc_file.write(ifc_file_path)
-    logging.info("IFC-Datei erfolgreich erstellt.")
-
-    logging.info("Erstelle IFC-Datei...")
-
-    ifc_file = ifcopenshell.file(schema="IFC4X3")
-
-    context, facility = create_ifc_project_structure(ifc_file)
-
-    # Creating groups within the facility
-    abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
-    haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
-
-    default_sohlenkote = data['default_sohlenkote']
-
-    create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote)
-    create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben)
-
-    logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")
-    ifc_file.write(ifc_file_path)
-    logging.info("IFC-Datei erfolgreich erstellt.")
