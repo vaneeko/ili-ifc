@@ -1,29 +1,24 @@
 import ifcopenshell
 import logging
-from utils import generate_guid, add_property_set, create_cartesian_point, create_swept_disk_solid
-
+from utils import generate_guid, add_property_set, create_cartesian_point, create_swept_disk_solid, create_property_single_value
 import math
 
 def create_ifc_project_structure(ifc_file):
-    # Create IFC project structure
     logging.info("Erstelle IFC-Projektstruktur.")
     project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
     context = ifc_file.create_entity("IfcGeometricRepresentationContext", ContextType="Model", ContextIdentifier="Building Model")
     site = ifc_file.create_entity("IfcSite", GlobalId=generate_guid(), Name="Perimeter")
     facility = ifc_file.create_entity("IfcBuilding", GlobalId=generate_guid(), Name="Entwässerungsanlage")
     
-    # Aggregate the structure properly
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=project, RelatedObjects=[site])
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[facility])
     
     return context, facility
     
 def create_swept_disk_solid(ifc_file, polyline, radius):
-    # Create swept disk solid entity
     return ifc_file.create_entity("IfcSweptDiskSolid", Directrix=polyline, Radius=radius)
 
 def create_local_placement(ifc_file, point, relative_to=None):
-    # Create local placement for an entity
     ifc_point = ifc_file.create_entity('IfcCartesianPoint', Coordinates=point)
     axis2placement = ifc_file.create_entity('IfcAxis2Placement3D', Location=ifc_point)
 
@@ -35,20 +30,14 @@ def create_local_placement(ifc_file, point, relative_to=None):
     return local_placement
 
 def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point_y):
-    # Calculate the total distance in the xy-plane between the start and end points
     total_distance = math.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
-    
-    # Calculate the distance from the start point to the current point
     point_distance = math.sqrt((point_x - start_x)**2 + (point_y - start_y)**2)
-    
-    # Interpolate the z value based on the distance ratio
     if total_distance != 0:
         return start_z + (end_z - start_z) * (point_distance / total_distance)
     else:
         return start_z
         
 def add_color(ifc_file, ifc_element, farbe, context):
-    # Add color to an IFC element
     color_map = {
         "Grün": (0.0, 1.0, 0.0),
         "Orange": (1.0, 0.65, 0.0),
@@ -93,10 +82,9 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
                 z = float(point['kote']) if point.get('kote') and float(point['kote']) != 0 else interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, float(point['c1']), float(point['c2'])) - start_z
                 polyline_3d.append([x, y, z])
         else:
-            # Polyline aus den Haltungspunkten erstellen
             polyline_3d = [
-                [0.0, 0.0, 0.0],  # Startpunkt
-                [end_x - start_x, end_y - start_y, end_z - start_z]  # Endpunkt
+                [0.0, 0.0, 0.0],
+                [end_x - start_x, end_y - start_y, end_z - start_z]
             ]
 
         ifc_polyline = ifc_file.create_entity('IfcPolyline', Points=[create_cartesian_point(ifc_file, p) for p in polyline_3d])
@@ -133,7 +121,14 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
             RelatingStructure=facility
         )
 
-        add_property_set(ifc_file, ifc_pipe_segment, "PipeSegmentPropertySet")
+        properties = {
+            "Bezeichnung": haltung['bezeichnung'],
+            "Material": haltung.get('material', ''),
+            "Länge Effektiv": str(haltung.get('length', '')),
+            "Lichte Höhe": str(haltung['durchmesser'])
+        }
+
+        add_property_set(ifc_file, ifc_pipe_segment, "TBAKTZH STRE Haltung", properties)
 
         ifc_file.create_entity("IfcRelAssignsToGroup",
             GlobalId=generate_guid(),
@@ -195,11 +190,32 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
         )
     )
     
-    add_property_set(ifc_file, schacht, "Normschacht")
-    ifc_file.create_entity("IfcRelContainedInSpatialStructure",
+    properties = {
+        "Bezeichnung": ns.get('bezeichnung', ''),
+        "Standortname": ns.get('standortname', ''),
+        "Höhe": str(hoehe),
+        "Durchmesser": str(breite),
+        "Funktion": ns.get('funktion', ''),
+        "Material": ns.get('material', ''),
+        "Sohlenkote": str(z_mitte)
+    }
+
+    property_set = ifc_file.create_entity("IfcPropertySet",
         GlobalId=generate_guid(),
-        RelatedElements=[schacht],
-        RelatingStructure=facility
+        Name="TBAKTZH STRE Schacht",
+        HasProperties=[create_property_single_value(ifc_file, key, value) for key, value in properties.items()]
+    )
+
+    ifc_file.create_entity("IfcRelDefinesByProperties",
+        GlobalId=generate_guid(),
+        RelatingPropertyDefinition=property_set,
+        RelatedObjects=[schacht]
+    )
+
+    ifc_file.create_entity("IfcRelContainedInSpatialStructure",
+    GlobalId=generate_guid(),
+    RelatedElements=[schacht],
+    RelatingStructure=facility
     )
 
     ifc_file.create_entity("IfcRelAssignsToGroup",
