@@ -159,7 +159,6 @@ def parse_haltungspunkte(root, namespace, default_sohlenkote):
             print(f"Fehler beim Parsen des Haltungspunkts {element.get('TID')}: {e}")
     return haltungspunkte
 
-
 def transform_coordinate(coordinate):
     # Transform coordinate if necessary
     return float(coordinate)
