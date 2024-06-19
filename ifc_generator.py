@@ -136,7 +136,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         )
 
 def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, abwasserknoten_group, einfaerben):
-    # Create a normschacht element
+    # Create a normschacht element with more detailed geometry
     lage = abwasserknoten.get('lage', {})
     x_mitte = float(lage.get('c1'))
     y_mitte = float(lage.get('c2'))
@@ -153,9 +153,19 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     axis_placement = ifc_file.create_entity("IfcAxis2Placement3D", Location=base_center, Axis=axis)
     ifc_local_placement = ifc_file.create_entity("IfcLocalPlacement", RelativePlacement=axis_placement)
 
-    profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
-    body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=profile, ExtrudedDirection=axis, Depth=hoehe)
+    # Create the outer cylindrical part
+    outer_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=radius)
+    outer_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=outer_profile, ExtrudedDirection=axis, Depth=hoehe)
 
+    # Create the inner cylindrical part (empty space inside the shaft)
+    inner_radius = radius - 0.05  # Assume wall thickness of 0.05m
+    inner_profile = ifc_file.create_entity("IfcCircleProfileDef", ProfileType="AREA", Radius=inner_radius)
+    inner_body = ifc_file.create_entity("IfcExtrudedAreaSolid", SweptArea=inner_profile, ExtrudedDirection=axis, Depth=hoehe)
+
+    # Combine outer and inner bodies to create the detailed shaft geometry
+    boolean_result = ifc_file.create_entity("IfcBooleanResult", Operator="DIFFERENCE", FirstOperand=outer_body, SecondOperand=inner_body)
+
+    # Create the normschacht element with detailed geometry
     schacht = ifc_file.create_entity("IfcDistributionChamberElement",
         GlobalId=generate_guid(),
         Name=ns.get('bezeichnung', 'Normschacht'),
@@ -165,17 +175,18 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
                 ContextOfItems=context,
                 RepresentationIdentifier="Body",
                 RepresentationType="SweptSolid",
-                Items=[body]
+                Items=[boolean_result]
             )]
         )
     )
+    
     add_property_set(ifc_file, schacht, "Normschacht")
     ifc_file.create_entity("IfcRelContainedInSpatialStructure",
         GlobalId=generate_guid(),
         RelatedElements=[schacht],
         RelatingStructure=facility
     )
-    
+
     # Add to abwasserknoten group
     ifc_file.create_entity("IfcRelAssignsToGroup",
         GlobalId=generate_guid(),
@@ -199,7 +210,7 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     else:
         farbe = "Blau"
         add_color(ifc_file, schacht, farbe, context)
-    
+   
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
     # Create IFC elements for normschachte
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
