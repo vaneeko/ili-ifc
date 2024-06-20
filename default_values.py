@@ -3,7 +3,7 @@ import logging
 def get_default_values():
     logging.info("Default-Werte werden gesetzt.")
     
-    # Defaults
+    # Default values
     default_sohlenkote = 100.0
     default_durchmesser = 2.0
     default_hoehe = 3.0
