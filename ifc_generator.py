@@ -15,9 +15,6 @@ def create_ifc_project_structure(ifc_file):
     
     return context, facility
     
-def create_swept_disk_solid(ifc_file, polyline, radius):
-    return ifc_file.create_entity("IfcSweptDiskSolid", Directrix=polyline, Radius=radius)
-
 def create_local_placement(ifc_file, point, relative_to=None):
     ifc_point = ifc_file.create_entity('IfcCartesianPoint', Coordinates=point)
     axis2placement = ifc_file.create_entity('IfcAxis2Placement3D', Location=ifc_point)
@@ -54,9 +51,12 @@ def add_color(ifc_file, ifc_element, farbe, context):
 def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote):
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
+    wanddicke = 0.03  # 30 mm Wanddicke
 
     for haltung in haltungen:
         durchmesser = haltung.get('durchmesser', default_durchmesser)
+        outer_radius = durchmesser / 2
+        inner_radius = outer_radius - wanddicke
 
         start_point = haltung['von_haltungspunkt']['lage']
         end_point = haltung['nach_haltungspunkt']['lage']
@@ -69,8 +69,8 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         end_y = float(end_point['c2'])
         end_z = float(haltung['nach_z']) if haltung['nach_z'] != 0.0 else default_sohlenkote
 
-        start_z += (durchmesser / 2)
-        end_z += (durchmesser / 2)
+        start_z += outer_radius
+        end_z += outer_radius
 
         ifc_local_placement = create_local_placement(ifc_file, [start_x, start_y, start_z], relative_to=facility.ObjectPlacement)
 
@@ -92,7 +92,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         ifc_pipe_segment = ifc_file.create_entity("IfcPipeSegment", GlobalId=generate_guid(), OwnerHistory=None, Name=haltung['bezeichnung'],
                                                   ObjectPlacement=ifc_local_placement, Representation=None)
 
-        swept_disk_solid = create_swept_disk_solid(ifc_file, ifc_polyline, durchmesser / 2)
+        swept_disk_solid = create_swept_disk_solid(ifc_file, ifc_polyline, outer_radius, inner_radius)
 
         shape_representation = ifc_file.create_entity("IfcShapeRepresentation",
                                                       ContextOfItems=context,

@@ -10,12 +10,12 @@ def create_cartesian_point(ifc_file, coordinates):
     # Create a Cartesian point entity
     return ifc_file.create_entity('IfcCartesianPoint', Coordinates=coordinates)
 
-def create_swept_disk_solid(ifc_file, polyline, radius):
+def create_swept_disk_solid(ifc_file, polyline, outer_radius, inner_radius):
     # Create a swept disk solid entity
     return ifc_file.create_entity('IfcSweptDiskSolid',
         Directrix=polyline,
-        Radius=radius,
-        InnerRadius=None,
+        Radius=outer_radius,
+        InnerRadius=inner_radius,
         StartParam=None,
         EndParam=None
     )
