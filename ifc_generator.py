@@ -14,7 +14,7 @@ def create_ifc_project_structure(ifc_file):
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[facility])
     
     return context, facility
-    
+
 def create_local_placement(ifc_file, point, relative_to=None):
     ifc_point = ifc_file.create_entity('IfcCartesianPoint', Coordinates=point)
     axis2placement = ifc_file.create_entity('IfcAxis2Placement3D', Location=ifc_point)
@@ -33,7 +33,7 @@ def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point
         return start_z + (end_z - start_z) * (point_distance / total_distance)
     else:
         return start_z
-        
+
 def add_color(ifc_file, ifc_element, farbe, context):
     color_map = {
         "Grün": (0.0, 1.0, 0.0),
@@ -47,6 +47,28 @@ def add_color(ifc_file, ifc_element, farbe, context):
     surface_style_rendering = ifc_file.create_entity("IfcSurfaceStyleRendering", SurfaceColour=surface_colour)
     surface_style = ifc_file.create_entity("IfcSurfaceStyle", Side="BOTH", Styles=[surface_style_rendering])
     styled_item = ifc_file.create_entity("IfcStyledItem", Item=ifc_element.Representation.Representations[0].Items[0], Styles=[surface_style])
+
+def check_haltung_within_normschacht(haltung, normschacht, default_sohlenkote):
+    start_point = haltung['von_haltungspunkt']['lage']
+    end_point = haltung['nach_haltungspunkt']['lage']
+    von_kote = haltung['von_z']
+    nach_kote = haltung['nach_z']
+
+    schacht_lage = normschacht['lage']
+    schacht_kote = float(normschacht['kote']) if normschacht['kote'] != 0 else default_sohlenkote
+    schacht_hoehe = float(normschacht['dimension2']) / 1000 if normschacht['dimension2'] != '0' else default_sohlenkote
+    schacht_radius = float(normschacht['dimension1']) / 2000 if normschacht['dimension1'] != '0' else default_sohlenkote / 2
+
+    start_within = (schacht_lage['c1'] - schacht_radius <= start_point['c1'] <= schacht_lage['c1'] + schacht_radius and
+                    schacht_lage['c2'] - schacht_radius <= start_point['c2'] <= schacht_lage['c2'] + schacht_radius and
+                    schacht_kote <= von_kote <= schacht_kote + schacht_hoehe)
+
+    end_within = (schacht_lage['c1'] - schacht_radius <= end_point['c1'] <= schacht_lage['c1'] + schacht_radius and
+                  schacht_lage['c2'] - schacht_radius <= end_point['c2'] <= schacht_lage['c2'] + schacht_radius and
+                  schacht_kote <= nach_kote <= schacht_kote + schacht_hoehe)
+
+    print(f"Check Haltung within Normschacht: Start within {start_within}, End within {end_within}")
+    return start_within and end_within
 
 def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote):
     haltungen = data['haltungen']
@@ -105,15 +127,35 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
 
         ifc_pipe_segment.Representation = product_shape
 
+        farbe = "Blau"
         if einfaerben:
             if start_z != default_sohlenkote and end_z != default_sohlenkote:
                 farbe = "Grün"
             else:
                 farbe = "Rot"
-            add_color(ifc_file, ifc_pipe_segment, farbe, context)
-        else:
-            farbe = "Blau"
-            add_color(ifc_file, ifc_pipe_segment, farbe, context)
+
+            print(f"Haltung: {haltung}")
+
+            abwasserknoten_von = next((ak for ak in data['abwasserknoten'] if ak['id'] == haltung['von_haltungspunkt'].get('abwasserknoten_ref')), None)
+            abwasserknoten_nach = next((ak for ak in data['abwasserknoten'] if ak['id'] == haltung['nach_haltungspunkt'].get('abwasserknoten_ref')), None)
+
+            print(f"Abwasserknoten von: {abwasserknoten_von}, Abwasserknoten nach: {abwasserknoten_nach}")
+
+            if abwasserknoten_von and abwasserknoten_nach:
+                normschacht_von = next((ns for ns in data['normschachte'] if ns['id'] == abwasserknoten_von.get('abwasserknoten_id')), None)
+                normschacht_nach = next((ns for ns in data['normschachte'] if ns['id'] == abwasserknoten_nach.get('abwasserknoten_id')), None)
+
+                if normschacht_von:
+                    print(f"Check Haltung within Normschacht von: {haltung['id']} in {normschacht_von['id']}")
+                    if not check_haltung_within_normschacht(haltung, normschacht_von, default_sohlenkote):
+                        farbe = "Rot"
+
+                if normschacht_nach:
+                    print(f"Check Haltung within Normschacht nach: {haltung['id']} in {normschacht_nach['id']}")
+                    if not check_haltung_within_normschacht(haltung, normschacht_nach, default_sohlenkote):
+                        farbe = "Rot"
+
+        add_color(ifc_file, ifc_pipe_segment, farbe, context)
 
         ifc_file.create_entity("IfcRelContainedInSpatialStructure",
             GlobalId=generate_guid(),
@@ -136,7 +178,7 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
             RelatingGroup=haltungen_group
         )
 
-def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, default_wanddicke, default_bodendicke, abwasserknoten_group, einfaerben):
+def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, default_wanddicke, default_bodendicke, abwasserknoten_group, einfaerben, data):
     lage = abwasserknoten.get('lage', {})
     x_mitte = float(lage.get('c1'))
     y_mitte = float(lage.get('c2'))
@@ -213,9 +255,9 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
     )
 
     ifc_file.create_entity("IfcRelContainedInSpatialStructure",
-    GlobalId=generate_guid(),
-    RelatedElements=[schacht],
-    RelatingStructure=facility
+        GlobalId=generate_guid(),
+        RelatedElements=[schacht],
+        RelatingStructure=facility
     )
 
     ifc_file.create_entity("IfcRelAssignsToGroup",
@@ -224,28 +266,41 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
         RelatingGroup=abwasserknoten_group
     )
 
+    fehlende_werte = 0
+    farbe = "Blau"
     if einfaerben:
-        fehlende_werte = sum([1 for key in ['dimension1', 'dimension2'] if ns.get(key) is None or ns.get(key) == '0'])
-        if abwasserknoten is None or abwasserknoten.get('kote') is None or float(abwasserknoten.get('kote', 0)) == 0:
+        if ns.get('dimension1') == '0' or ns.get('dimension2') == '0':
+            fehlende_werte += 1
+        if not abwasserknoten or float(abwasserknoten.get('kote', 0)) == 0:
             fehlende_werte += 1
 
-        if fehlende_werte == 0:
-            farbe = "Grün"
-        elif fehlende_werte == 1:
+        farbe = "Grün"
+        if fehlende_werte == 1:
             farbe = "Orange"
-        else:
+        elif fehlende_werte >= 2:
             farbe = "Rot"
-        add_color(ifc_file, schacht, farbe, context)
-    else:
-        farbe = "Blau"
-        add_color(ifc_file, schacht, farbe, context)
+        else:
+            # Prüfen, ob die zugeordneten Haltungspunkte innerhalb des Schachtes sind
+            zugeordnete_haltungen = [haltung for haltung in data['haltungen'] if haltung['von_haltungspunkt'].get('abwasserknoten_ref') == abwasserknoten['id'] or haltung['nach_haltungspunkt'].get('abwasserknoten_ref') == abwasserknoten['id']]
+            for haltung in zugeordnete_haltungen:
+                print(f"Check Haltung within Normschacht für Schacht {ns['id']} und Haltung {haltung['id']}")
+                if not check_haltung_within_normschacht(haltung, ns, default_sohlenkote):
+                    fehlende_werte += 1
+                    break
+
+            if fehlende_werte == 1:
+                farbe = "Orange"
+            elif fehlende_werte >= 2:
+                farbe = "Rot"
+
+    add_color(ifc_file, schacht, farbe, context)
 
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
         abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
         if abwasserknoten:
-            create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben)
+            create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
         else:
             logging.error(f"Fehler: Normschacht {ns.get('id', 'Unbekannt')} oder zugehöriger Abwasserknoten hat keine Koordinaten.")
             data['nicht_verarbeitete_normschachte'].append(ns['id'])
