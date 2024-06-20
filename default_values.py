@@ -3,14 +3,14 @@ import logging
 def get_default_values():
     logging.info("Default-Werte werden gesetzt.")
     
-    # Setze Standardwerte
+    # Defaults
     default_sohlenkote = 100.0
     default_durchmesser = 2.0
     default_hoehe = 3.0
     default_wanddicke = 0.05
     default_bodendicke = 0.02
 
-    # Frage den Benutzer nach neuen Werten oder bestätige Standardwerte
+    # Default values
     try:
         new_sohlenkote = input(f"Standardwert für unbekannte Sohlenkoten von Abwasserknoten ({default_sohlenkote}m): ")
         if new_sohlenkote.strip():
