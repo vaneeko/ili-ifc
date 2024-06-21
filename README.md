@@ -10,13 +10,13 @@ Der XTF zu IFC Konverter ist ein Python-basiertes Tool, das die Konvertierung vo
 Repository klonen:
 ```
 git clone https://github.com/vaneeko/ili-ifc.git
-cd xtf-zu-ifc-konverter
+cd ili-ifc
 ```
 Erforderliche Abhängigkeiten installieren:
 ```
 pip install ifcopenshell
-Konfiguration
 ```
+## Konfiguration
 Erstellen einer config.txt Datei im Stammverzeichnis des Projekts mit folgendem Format:
 ```
 xtf_files = C:\pfad\zu\xtf\dateien\
