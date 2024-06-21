@@ -89,6 +89,8 @@ def parse_normschachte(root, namespace, abwasserknoten_data, default_durchmesser
                     'kote': abwasserknoten['kote'],
                     'dimension1': get_element_text(ns, 'ili:Dimension1', namespace) if get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
                     'dimension2': get_element_text(ns, 'ili:Dimension2', namespace) if get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                    'dimorg1': get_element_text(ns, 'ili:Dimension1', namespace),
+                    'dimorg2': get_element_text(ns, 'ili:Dimension2', namespace),
                     'bezeichnung': get_element_text(ns, 'ili:Bezeichnung', namespace),
                     'standortname': get_element_text(ns, 'ili:Standortname', namespace),
                     'funktion': get_element_text(ns, 'ili:Funktion', namespace),
