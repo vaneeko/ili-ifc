@@ -6,7 +6,8 @@ Der XTF zu IFC Konverter ist ein Python-basiertes Tool, das die Konvertierung vo
 - Konfigurationsdatei-Unterstützung: Konfiguration von Eingabe- und Ausgabepfaden über eine config.txt Datei.
 - Protokollierung: Detaillierte Protokollierung zur Überwachung des Konvertierungsprozesses und zur Fehlerbehebung.
 - Anpassbare Standardwerte: Definieren und Verwenden von Standardwerten für verschiedene Parameter im Konvertierungsprozess.
-/assets/images/conv.png
+  
+![Bild der Konvertierungslogik](img/conv.png)
 ## Installation
 Repository klonen:
 ```
