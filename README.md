@@ -1,6 +1,6 @@
 # XTF zu IFC Konverter
 ## Überblick
-Der XTF zu IFC Konverter ist ein Python-basiertes Tool, das die Konvertierung von XTF-Dateien in IFC-Dateien ermöglicht. Dieses Tool wird im Bauingenieurwesen und bei Infrastrukturprojekten verwendet, um die Interoperabilität zwischen verschiedenen Datenformaten sicherzustellen.
+Der XTF zu IFC Konverter ist ein Python-basiertes Tool, das die Konvertierung von XTF-Dateien in IFC-Dateien ermöglicht. Dieses Tool wird verwendet, um die Interoperabilität zwischen verschiedenen Datenformaten sicherzustellen.
 ## Funktionen
 - XTF zu IFC Konvertierung: Konvertiert XTF-Dateien in IFC-Dateien.
 - Konfigurationsdatei-Unterstützung: Konfiguration von Eingabe- und Ausgabepfaden über eine config.txt Datei.
