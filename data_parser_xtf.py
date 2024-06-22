@@ -13,12 +13,12 @@ class XTFParser:
         root = tree.getroot()
         namespace = {'ili': 'http://www.interlis.ch/INTERLIS2.3'}
 
-        default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, einfaerben = get_default_values()
+        default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, einfaerben = get_default_values()
 
         try:
             haltungspunkte = self.parse_haltungspunkte(root, namespace, default_sohlenkote)
             abwasserknoten, haltungspunkt_sohlenkoten = self.parse_abwasserknoten(root, namespace, default_sohlenkote, default_durchmesser, default_hoehe)
-            normschachte, nicht_verarbeitete_normschachte = self.parse_normschachte(root, namespace, abwasserknoten, default_durchmesser, default_hoehe, default_sohlenkote)
+            normschachte, nicht_verarbeitete_normschachte = self.parse_normschachte(root, namespace, abwasserknoten, haltungspunkte, default_durchmesser, default_hoehe, default_sohlenkote)
             kanale, nicht_verarbeitete_kanale = self.parse_kanale(root, namespace)
             haltungen, nicht_verarbeitete_haltungen = self.parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote)
         except Exception as e:
@@ -36,6 +36,7 @@ class XTFParser:
             'default_sohlenkote': default_sohlenkote,
             'default_wanddicke': default_wanddicke,
             'default_bodendicke': default_bodendicke,
+            'default_rohrdicke': default_rohrdicke,
             'nicht_verarbeitete_kanale': nicht_verarbeitete_kanale,
             'nicht_verarbeitete_haltungen': nicht_verarbeitete_haltungen,
             'nicht_verarbeitete_normschachte': nicht_verarbeitete_normschachte,
@@ -98,7 +99,8 @@ class XTFParser:
                         },
                         'dimension1': dimension1,
                         'dimension2': dimension2,
-                        'kote': sohlenkote
+                        'kote': sohlenkote,
+                        'ref': abwasserknoten.find('ili:AbwasserbauwerkRef', namespace).get('REF') if abwasserknoten.find('ili:AbwasserbauwerkRef', namespace) is not None else None
                     })
 
                     haltungspunkt_sohlenkoten[haltungspunkt_id] = sohlenkote
@@ -108,7 +110,7 @@ class XTFParser:
 
         return abwasserknoten_data, haltungspunkt_sohlenkoten
 
-    def parse_normschachte(self, root, namespace, abwasserknoten_data, default_durchmesser, default_hoehe, default_sohlenkote):
+    def parse_normschachte(self, root, namespace, abwasserknoten_data, haltungspunkte, default_durchmesser, default_hoehe, default_sohlenkote):
         logging.info("Starting to parse norm shafts.")
         normschachte = []
         nicht_verarbeitete_normschachte = []
@@ -121,12 +123,19 @@ class XTFParser:
         for path in schacht_paths:
             for ns in root.findall(path, namespace):
                 normschacht_id = ns.get('TID')
-                abwasserknoten_id = normschacht_id.replace('dvabwN', 'dvaneA').strip()
-                abwasserknoten = next((ak for ak in abwasserknoten_data if ak['id'].strip() == abwasserknoten_id), None)
+
+                # Verwenden Sie die AbwasserbauwerkRef zur Verknüpfung
+                abwasserbauwerk_ref = ns.find('ili:AbwasserbauwerkRef', namespace)
+                if abwasserbauwerk_ref is not None:
+                    abwasserbauwerk_id = abwasserbauwerk_ref.get('REF')
+                    abwasserknoten = next((ak for ak in abwasserknoten_data if ak['id'].strip() == abwasserbauwerk_id or ak.get('ref') == abwasserbauwerk_id), None)
+                else:
+                    abwasserknoten = next((ak for ak in abwasserknoten_data if ak['id'].strip() == normschacht_id or ak.get('ref') == normschacht_id), None)
+
                 if abwasserknoten:
                     normschachte.append({
                         'id': ns.get('TID'),
-                        'abwasserknoten_id': abwasserknoten_id,
+                        'abwasserknoten_id': abwasserknoten['id'],
                         'lage': abwasserknoten['lage'],
                         'kote': abwasserknoten['kote'],
                         'dimension1': self.get_element_text(ns, 'ili:Dimension1', namespace) if self.get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
@@ -139,36 +148,50 @@ class XTFParser:
                         'material': self.get_element_text(ns, 'ili:Material', namespace)
                     })
                 else:
-                    print(f"Normschacht {ns.get('TID')} hat keinen zugehörigen Abwasserknoten")
-                    nicht_verarbeitete_normschachte.append(ns.get('TID'))
+                    # Extrahiere Koordinaten direkt aus dem Normschacht
+                    lage = ns.find('ili:Lage/ili:COORD', namespace)
+                    if lage is not None:
+                        c1 = lage.find('ili:C1', namespace).text
+                        c2 = lage.find('ili:C2', namespace).text
+                        normschachte.append({
+                            'id': ns.get('TID'),
+                            'abwasserknoten_id': None,
+                            'lage': {'c1': c1, 'c2': c2},
+                            'kote': default_sohlenkote,
+                            'dimension1': self.get_element_text(ns, 'ili:Dimension1', namespace) if self.get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
+                            'dimension2': self.get_element_text(ns, 'ili:Dimension2', namespace) if self.get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                            'dimorg1': self.get_element_text(ns, 'ili:Dimension1', namespace),
+                            'dimorg2': self.get_element_text(ns, 'ili:Dimension2', namespace),
+                            'bezeichnung': self.get_element_text(ns, 'ili:Bezeichnung', namespace),
+                            'standortname': self.get_element_text(ns, 'ili:Standortname', namespace),
+                            'funktion': self.get_element_text(ns, 'ili:Funktion', namespace),
+                            'material': self.get_element_text(ns, 'ili:Material', namespace)
+                        })
+                    else:
+                        # Überprüfen Sie, ob Haltungspunkte existieren und berechnen Sie den Mittelpunkt
+                        zugehoerige_haltungspunkte = [hp for hp in haltungspunkte if hp['lage']['c1'] and hp['lage']['c2'] and ns.get('TID') in hp['id']]
+                        if len(zugehoerige_haltungspunkte) >= 2:
+                            mittelpunkt_c1 = sum(hp['lage']['c1'] for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
+                            mittelpunkt_c2 = sum(hp['lage']['c2'] for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
+                            normschachte.append({
+                                'id': ns.get('TID'),
+                                'abwasserknoten_id': None,
+                                'lage': {'c1': mittelpunkt_c1, 'c2': mittelpunkt_c2},
+                                'kote': default_sohlenkote,
+                                'dimension1': self.get_element_text(ns, 'ili:Dimension1', namespace) if self.get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
+                                'dimension2': self.get_element_text(ns, 'ili:Dimension2', namespace) if self.get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                                'dimorg1': self.get_element_text(ns, 'ili:Dimension1', namespace),
+                                'dimorg2': self.get_element_text(ns, 'ili:Dimension2', namespace),
+                                'bezeichnung': self.get_element_text(ns, 'ili:Bezeichnung', namespace),
+                                'standortname': self.get_element_text(ns, 'ili:Standortname', namespace),
+                                'funktion': self.get_element_text(ns, 'ili:Funktion', namespace),
+                                'material': self.get_element_text(ns, 'ili:Material', namespace)
+                            })
+                        else:
+                            print(f"Normschacht {ns.get('TID')} hat keine Koordinaten")
+                            nicht_verarbeitete_normschachte.append(ns.get('TID'))
 
         return normschachte, nicht_verarbeitete_normschachte
-
-    def parse_kanale(self, root, namespace):
-        logging.info("Starting to parse channels.")
-        kanale = []
-        nicht_verarbeitete_kanale = []
-
-        kanal_paths = [
-            './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Kanal',
-            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Kanal'
-        ]
-
-        for path in kanal_paths:
-            for kanal in root.findall(path, namespace):
-                try:
-                    kanale.append({
-                        'id': kanal.get('TID'),
-                        'letzte_aenderung': kanal.find('ili:Letzte_Aenderung', namespace).text if kanal.find('ili:Letzte_Aenderung', namespace) is not None else "Unbekannt",
-                        'standortname': kanal.find('ili:Standortname', namespace).text if kanal.find('ili:Standortname', namespace) is not None else "Unbekannt",
-                        'zugaenglichkeit': kanal.find('ili:Zugaenglichkeit', namespace).text if kanal.find('ili:Zugaenglichkeit', namespace) is not None else "Unbekannt",
-                        'bezeichnung': kanal.find('ili:Bezeichnung', namespace).text if kanal.find('ili:Bezeichnung', namespace).text is not None else "Unbekannt",
-                        'nutzungsart_ist': kanal.find('ili:Nutzungsart_Ist', namespace).text if kanal.find('ili:Nutzungsart_Ist', namespace) is not None else "Unbekannt"
-                    })
-                except AttributeError as e:
-                    nicht_verarbeitete_kanale.append(kanal.get('TID'))
-
-        return kanale, nicht_verarbeitete_kanale
 
     def parse_haltungspunkte(self, root, namespace, default_sohlenkote):
         haltungspunkte = []
@@ -266,3 +289,29 @@ class XTFParser:
                     print(f"Fehler bei der Verarbeitung der Haltung {haltung.get('TID')}: {e}")
 
         return haltungen, nicht_verarbeitete_haltungen
+
+    def parse_kanale(self, root, namespace):
+        logging.info("Starting to parse channels.")
+        kanale = []
+        nicht_verarbeitete_kanale = []
+
+        kanal_paths = [
+            './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Kanal',
+            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Kanal'
+        ]
+
+        for path in kanal_paths:
+            for kanal in root.findall(path, namespace):
+                try:
+                    kanale.append({
+                        'id': kanal.get('TID'),
+                        'letzte_aenderung': kanal.find('ili:Letzte_Aenderung', namespace).text if kanal.find('ili:Letzte_Aenderung', namespace) is not None else "Unbekannt",
+                        'standortname': kanal.find('ili:Standortname', namespace).text if kanal.find('ili:Standortname', namespace) is not None else "Unbekannt",
+                        'zugaenglichkeit': kanal.find('ili:Zugaenglichkeit', namespace).text if kanal.find('ili:Zugaenglichkeit', namespace) is not None else "Unbekannt",
+                        'bezeichnung': kanal.find('ili:Bezeichnung', namespace).text if kanal.find('ili:Bezeichnung', namespace).text is not None else "Unbekannt",
+                        'nutzungsart_ist': kanal.find('ili:Nutzungsart_Ist', namespace).text if kanal.find('ili:Nutzungsart_Ist', namespace) is not None else "Unbekannt"
+                    })
+                except AttributeError as e:
+                    nicht_verarbeitete_kanale.append(kanal.get('TID'))
+
+        return kanale, nicht_verarbeitete_kanale

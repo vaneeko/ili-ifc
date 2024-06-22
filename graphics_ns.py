@@ -2,18 +2,32 @@ import ifcopenshell
 from utils import add_color, generate_guid, create_local_placement, create_cartesian_point, create_property_single_value
 
 def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, default_wanddicke, default_bodendicke, abwasserknoten_group, einfaerben, data):
-    lage = abwasserknoten.get('lage', {})
-    x_mitte = float(lage.get('c1'))
-    y_mitte = float(lage.get('c2'))
-    breite = float(ns['dimension1']) / 1000.0 if ns['dimension1'] != '0' else default_durchmesser
-    tiefe = float(ns['dimension2']) / 1000.0 if ns['dimension2'] != '0' else default_hoehe
+    if abwasserknoten:
+        lage = abwasserknoten.get('lage', {})
+        x_mitte = float(lage.get('c1'))
+        y_mitte = float(lage.get('c2'))
+        kote = abwasserknoten.get('kote')
+        z_mitte = float(kote) if kote and float(kote) != 0 else default_sohlenkote
+    else:
+        lage = ns.get('lage', {})
+        x_mitte = float(lage.get('c1'))
+        y_mitte = float(lage.get('c2'))
+        z_mitte = default_sohlenkote
+
+    try:
+        breite = float(ns['dimension1']) / 1000.0 if ns['dimension1'] != '0' else default_durchmesser
+    except ValueError:
+        breite = default_durchmesser
+
+    try:
+        tiefe = float(ns['dimension2']) / 1000.0 if ns['dimension2'] != '0' else default_hoehe
+    except ValueError:
+        tiefe = default_hoehe
+
     radius = breite / 2
     hoehe = tiefe
     wanddicke = default_wanddicke
     bodendicke = default_bodendicke
-
-    kote = abwasserknoten.get('kote')
-    z_mitte = float(kote) if kote and float(kote) != 0 else default_sohlenkote
 
     base_center = create_cartesian_point(ifc_file, (x_mitte, y_mitte, z_mitte))
     axis = ifc_file.create_entity("IfcDirection", DirectionRatios=(0.0, 0.0, 1.0))
@@ -83,11 +97,12 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, defa
         RelatingStructure=facility
     )
 
-    ifc_file.create_entity("IfcRelAssignsToGroup",
-        GlobalId=generate_guid(),
-        RelatedObjects=[schacht],
-        RelatingGroup=abwasserknoten_group
-    )
+    if abwasserknoten:
+        ifc_file.create_entity("IfcRelAssignsToGroup",
+            GlobalId=generate_guid(),
+            RelatedObjects=[schacht],
+            RelatingGroup=abwasserknoten_group
+        )
 
     fehlende_werte = 0
     farbe = "Blau"
