@@ -1,8 +1,8 @@
 import ifcopenshell
 import logging
+import math
 from utils import add_color, generate_guid, add_property_set, create_local_placement, create_cartesian_point, create_swept_disk_solid, create_property_single_value
 from graphics_ns import create_ifc_normschacht
-import math
 
 def create_ifc_project_structure(ifc_file):
     logging.info("Erstelle IFC-Projektstruktur.")
@@ -119,7 +119,7 @@ def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_gr
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
         abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
-        create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
+        create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data, data['haltungen'])
 
 def create_ifc(ifc_file_path, data, einfaerben):
     logging.info("Erstelle IFC-Datei...")
