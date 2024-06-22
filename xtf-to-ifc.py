@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import shutil
 from data_parser_xtf import XTFParser
 from ifc_generator import create_ifc

@@ -20,7 +20,8 @@ def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point
     total_distance = math.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
     point_distance = math.sqrt((point_x - start_x)**2 + (point_y - start_y)**2)
     if total_distance != 0:
-        return start_z + (end_z - start_z) * (point_distance / total_distance)
+        interpolated_z = start_z + (end_z - start_z) * (point_distance / total_distance)
+        return max(min(interpolated_z, max(start_z, end_z)), min(start_z, end_z))
     else:
         return start_z
 
@@ -30,9 +31,9 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
     default_rohrdicke = data['default_rohrdicke']  # Verwende den Standardwert für die Rohrdicke
 
     for haltung in haltungen:
-        durchmesser = haltung.get('durchmesser', default_durchmesser)
-        outer_radius = durchmesser / 2
-        inner_radius = outer_radius - default_rohrdicke
+        innendurchmesser = haltung.get('durchmesser', default_durchmesser)
+        outer_radius = (innendurchmesser / 2) + default_rohrdicke
+        inner_radius = innendurchmesser / 2
 
         start_point = haltung['von_haltungspunkt']['lage']
         end_point = haltung['nach_haltungspunkt']['lage']
@@ -45,8 +46,8 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
         end_y = float(end_point['c2'])
         end_z = float(haltung['nach_z']) if haltung['nach_z'] != 0.0 else default_sohlenkote
 
-        start_z += outer_radius
-        end_z += outer_radius
+        start_z += inner_radius
+        end_z += inner_radius
 
         ifc_local_placement = create_local_placement(ifc_file, [start_x, start_y, start_z], relative_to=facility.ObjectPlacement)
 
@@ -55,7 +56,10 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
             for point in haltung['verlauf']:
                 x = float(point['c1']) - start_x
                 y = float(point['c2']) - start_y
-                z = float(point['kote']) if point.get('kote') and float(point['kote']) != 0 else interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, float(point['c1']), float(point['c2'])) - start_z
+                if point.get('kote') and float(point['kote']) != 0:
+                    z = float(point['kote']) - start_z
+                else:
+                    z = interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, float(point['c1']), float(point['c2'])) - start_z
                 polyline_3d.append([x, y, z])
         else:
             polyline_3d = [
@@ -114,16 +118,8 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
-        if ns['abwasserknoten_id']:
-            abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
-            if abwasserknoten:
-                create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
-            else:
-                logging.error(f"Fehler: Normschacht {ns.get('id', 'Unbekannt')} hat keine zugehörigen Abwasserknoten-Koordinaten.")
-                data['nicht_verarbeitete_normschachte'].append(ns['id'])
-        else:
-            # Erstelle Normschacht ohne zugehörigen Abwasserknoten
-            create_ifc_normschacht(ifc_file, ns, None, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
+        abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
+        create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
 
 def create_ifc(ifc_file_path, data, einfaerben):
     logging.info("Erstelle IFC-Datei...")
