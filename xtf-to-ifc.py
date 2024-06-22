@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import shutil
 from data_parser_xtf import XTFParser
 from ifc_generator import create_ifc
 
@@ -29,6 +30,12 @@ def convert_xtf_to_ifc(xtf_file, ifc_file):
     create_ifc(ifc_file, data, data['defaults'][5])  # Pass the 'einfaerben' value from defaults
     logging.info(f"IFC file saved: {ifc_file}")
 
+def delete_pycache():
+    pycache_path = os.path.join(os.path.dirname(__file__), '__pycache__')
+    if os.path.exists(pycache_path):
+        shutil.rmtree(pycache_path)
+        logging.info(f"__pycache__ Ordner wurde gelöscht: {pycache_path}")
+
 if __name__ == '__main__':
     setup_logging()
     logging.info("Programmstart")
@@ -54,3 +61,5 @@ if __name__ == '__main__':
             convert_xtf_to_ifc(xtf_file_path, ifc_file_path)
         except Exception as e:
             logging.error(f"Fehler bei der Konvertierung von XTF zu IFC: {e}", exc_info=True)
+
+    delete_pycache()
