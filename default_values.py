@@ -5,12 +5,12 @@ def get_default_values():
     
     # Default values
     default_sohlenkote = 100.0
-    default_durchmesser = 2.0
-    default_hoehe = 3.0
-    default_wanddicke = 0.05
+    default_durchmesser = 0.8
+    default_hoehe = 0.8
+    default_wanddicke = 0.04
     default_bodendicke = 0.02
+    default_rohrdicke = 0.02
 
-    # Default values
     try:
         new_sohlenkote = input(f"Standardwert für unbekannte Sohlenkoten von Abwasserknoten ({default_sohlenkote}m): ")
         if new_sohlenkote.strip():
@@ -46,7 +46,14 @@ def get_default_values():
     except ValueError:
         print("Ungültige Eingabe. Behalte den Standardwert.")
 
+    try:
+        new_rohrdicke = input(f"Standardwert für Rohrdicke von Haltungen ({default_rohrdicke}m): ")
+        if new_rohrdicke.strip():
+            default_rohrdicke = float(new_rohrdicke)
+    except ValueError:
+        print("Ungültige Eingabe. Behalte den Standardwert.")
+
     einfaerben = input("Möchten Sie bei fehlenden Werten die IFC-Elemente einfärben? (Ja/Nein, Standard: Nein): ").strip().lower()
     einfaerben = einfaerben in ["ja", "j"]
 
-    return default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, einfaerben
+    return default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, einfaerben

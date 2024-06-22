@@ -27,12 +27,12 @@ def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point
 def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, einfaerben, default_sohlenkote):
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
-    wanddicke = 0.03  # 30 mm Wanddicke
+    default_rohrdicke = data['default_rohrdicke']  # Verwende den Standardwert für die Rohrdicke
 
     for haltung in haltungen:
         durchmesser = haltung.get('durchmesser', default_durchmesser)
         outer_radius = durchmesser / 2
-        inner_radius = outer_radius - wanddicke
+        inner_radius = outer_radius - default_rohrdicke
 
         start_point = haltung['von_haltungspunkt']['lage']
         end_point = haltung['nach_haltungspunkt']['lage']
@@ -114,12 +114,16 @@ def create_ifc_haltungen(ifc_file, data, facility, context, haltungen_group, ein
 def create_ifc_normschachte(ifc_file, data, facility, context, abwasserknoten_group, einfaerben):
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
-        abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
-        if abwasserknoten:
-            create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
+        if ns['abwasserknoten_id']:
+            abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
+            if abwasserknoten:
+                create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
+            else:
+                logging.error(f"Fehler: Normschacht {ns.get('id', 'Unbekannt')} hat keine zugehörigen Abwasserknoten-Koordinaten.")
+                data['nicht_verarbeitete_normschachte'].append(ns['id'])
         else:
-            logging.error(f"Fehler: Normschacht {ns.get('id', 'Unbekannt')} oder zugehöriger Abwasserknoten hat keine Koordinaten.")
-            data['nicht_verarbeitete_normschachte'].append(ns['id'])
+            # Erstelle Normschacht ohne zugehörigen Abwasserknoten
+            create_ifc_normschacht(ifc_file, ns, None, facility, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
 
 def create_ifc(ifc_file_path, data, einfaerben):
     logging.info("Erstelle IFC-Datei...")
