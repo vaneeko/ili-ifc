@@ -74,4 +74,4 @@ def get_default_values():
     einfaerben = input("Möchten Sie bei fehlenden Werten die IFC-Elemente einfärben? (Ja/Nein, Standard: Nein): ").strip().lower()
     einfaerben = einfaerben in ["ja", "j"]
 
-    return default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, brep_ifc_file, einfaerben
+    return default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, einfaerben
