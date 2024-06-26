@@ -8,7 +8,6 @@ def get_default_values():
                 name, value = line.split('=')
                 name = name.strip()
                 value = value.strip()
-                # Nur die erwarteten float-Werte konvertieren
                 if name in [
                     'default_sohlenkote', 
                     'default_durchmesser', 
@@ -29,6 +28,7 @@ def get_default_values():
     default_wanddicke = config['default_wanddicke']
     default_bodendicke = config['default_bodendicke']
     default_rohrdicke = config['default_rohrdicke']
+    brep_ifc_file = config['brep_ifc_file']
 
     try:
         new_sohlenkote = input(f"Standardwert für unbekannte Sohlenkoten von Abwasserknoten ({default_sohlenkote}m): ").strip()
@@ -75,4 +75,4 @@ def get_default_values():
     einfaerben = input("Möchten Sie bei fehlenden Werten die IFC-Elemente einfärben? (Ja/Nein, Standard: Nein): ").strip().lower()
     einfaerben = einfaerben in ["ja", "j"]
 
-    return default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, einfaerben
+    return default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, brep_ifc_file, einfaerben
