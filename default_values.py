@@ -8,7 +8,6 @@ def get_default_values():
                 name, value = line.split('=')
                 name = name.strip()
                 value = value.strip()
-                # Nur die erwarteten float-Werte konvertieren
                 if name in [
                     'default_sohlenkote', 
                     'default_durchmesser', 
