@@ -24,15 +24,16 @@ def add_color(ifc_file, ifc_element, farbe, context):
     surface_style = ifc_file.create_entity("IfcSurfaceStyle", Side="BOTH", Styles=[surface_style_rendering])
     styled_item = ifc_file.create_entity("IfcStyledItem", Item=ifc_element.Representation.Representations[0].Items[0], Styles=[surface_style])
 
-def create_local_placement(ifc_file, point, relative_to=None):
-    ifc_point = ifc_file.create_entity('IfcCartesianPoint', Coordinates=point)
-    axis2placement = ifc_file.create_entity('IfcAxis2Placement3D', Location=ifc_point)
-
-    if relative_to:
-        local_placement = ifc_file.create_entity('IfcLocalPlacement', PlacementRelTo=relative_to, RelativePlacement=axis2placement)
+def create_local_placement(ifc_file, point, direction=None, relative_to=None):
+    location = create_cartesian_point(ifc_file, point)
+    if direction:
+        axis = ifc_file.create_entity("IfcDirection", DirectionRatios=direction)
+        ref_direction = ifc_file.create_entity("IfcDirection", DirectionRatios=(1.0, 0.0, 0.0))
+        axis2placement = ifc_file.create_entity("IfcAxis2Placement3D", Location=location, Axis=axis, RefDirection=ref_direction)
     else:
-        local_placement = ifc_file.create_entity('IfcLocalPlacement', RelativePlacement=axis2placement)
-    
+        axis2placement = ifc_file.create_entity("IfcAxis2Placement3D", Location=location)
+
+    local_placement = ifc_file.create_entity('IfcLocalPlacement', PlacementRelTo=relative_to, RelativePlacement=axis2placement)
     return local_placement
 
 def create_swept_disk_solid(ifc_file, polyline, outer_radius, inner_radius):
