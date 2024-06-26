@@ -28,7 +28,6 @@ def get_default_values():
     default_wanddicke = config['default_wanddicke']
     default_bodendicke = config['default_bodendicke']
     default_rohrdicke = config['default_rohrdicke']
-    brep_ifc_file = config['brep_ifc_file']
 
     try:
         new_sohlenkote = input(f"Standardwert für unbekannte Sohlenkoten von Abwasserknoten ({default_sohlenkote}m): ").strip()

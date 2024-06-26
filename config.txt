@@ -1,6 +1,5 @@
 xtf_files = C:\converter\xtf\
 output_folder = C:\converter\
-brep_ifc_file = C:\converter\Abwasser_vollständig_brep.ifc
 default_sohlenkote = 100.0
 default_durchmesser = 0.8
 default_hoehe = 0.8
