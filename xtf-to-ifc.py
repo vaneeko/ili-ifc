@@ -26,7 +26,7 @@ def convert_xtf_to_ifc(xtf_file, ifc_file):
     parser = XTFParser()
     data = parser.parse(xtf_file)
 
-    create_ifc(ifc_file, data, data['defaults'][5])  # Pass the 'einfaerben' value from defaults
+    create_ifc(ifc_file, data, data['defaults'][5])
     logging.info(f"IFC file saved: {ifc_file}")
 
 def delete_pycache():
