@@ -168,7 +168,7 @@ class XTFParser:
                             'material': self.get_element_text(ns, 'ili:Material', namespace)
                         })
                     else:
-                        # Überprüfen Sie, ob Haltungspunkte existieren und berechnen Sie den Mittelpunkt
+                        # Überprüfung, ob Haltungspunkte existieren und berechne den Mittelpunkt
                         zugehoerige_haltungspunkte = [hp for hp in haltungspunkte if hp['lage']['c1'] and hp['lage']['c2'] and ns.get('TID') in hp['id']]
                         if len(zugehoerige_haltungspunkte) >= 2:
                             mittelpunkt_c1 = sum(hp['lage']['c1'] for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
