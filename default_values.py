@@ -1,9 +1,12 @@
 import logging
+import os
 
 def get_default_values():
-    def read_config(filename):
+    def read_config(config_file='config.txt'):
         config = {}
-        with open(filename, 'r') as file:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(script_dir, config_file)
+        with open(config_path, 'r') as file:
             for line in file:
                 name, value = line.split('=')
                 name = name.strip()

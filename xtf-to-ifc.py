@@ -11,7 +11,9 @@ def setup_logging():
 
 def read_config(config_file='config.txt'):
     config = {}
-    with open(config_file, 'r') as file:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(script_dir, config_file)
+    with open(config_path, 'r') as file:
         for line in file:
             name, value = line.strip().split('=')
             config[name.strip()] = value.strip()
