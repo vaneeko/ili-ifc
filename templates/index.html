@@ -1,89 +1,241 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XTF zu IFC Konverter</title>
+    <title>XTF to IFC Converter</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .input-group { margin-bottom: 10px; }
-        input[type="file"], input[type="number"], input[type="checkbox"], button { margin-top: 5px; }
-        #result, #downloadLinks { margin-top: 20px; }
-        #downloadLinks a { display: block; margin-bottom: 5px; }
+        @font-face {
+            font-family: 'Pixelated';
+            src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        }
+        body {
+            background-color: #e5e7eb;
+            font-family: 'Pixelated', monospace;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        .text-shadow {
+            text-shadow: 2px 2px 0 #000;
+        }
+        .pixel-button {
+            padding: 10px 20px;
+            font-family: 'Pixelated', monospace;
+            color: white;
+            border-bottom: 4px solid black;
+            border-right: 4px solid black;
+            background-color: #3B82F6;
+            transition: background-color 0.15s ease-in-out;
+            border-radius: 8px;
+        }
+        .pixel-button:disabled {
+            background-color: #6B7280;
+            cursor: not-allowed;
+        }
+        .pixel-button:hover:not(:disabled) {
+            background-color: #2563EB;
+        }
+        .pixel-button:active:not(:disabled) {
+            background-color: #1D4ED8;
+        }
+        .pixel-input {
+            width: 100%;
+            padding: 5px;
+            font-family: 'Pixelated', monospace;
+            border: 2px solid black;
+            background-color: white;
+            outline: none;
+            border-radius: 8px;
+        }
+        .pixel-input:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .card {
+            background-color: white;
+            border: 4px solid black;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .card-header {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .card-content {
+            margin-top: 10px;
+        }
+        .form-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid black;
+            background: white;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        .form-checkbox:checked {
+            background: #3B82F6;
+        }
+        .alert {
+            background-color: #10B981;
+            border: 4px solid black;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
-    <h1>XTF zu IFC Konverter</h1>
-    <form id="convertForm">
-        <div class="input-group">
-            <label for="xtfFiles">XTF-Dateien auswählen:</label>
-            <input type="file" id="xtfFiles" accept=".xtf" multiple required>
+    <div class="container">
+        <h1 class="text-4xl font-bold mb-4 text-center text-shadow">XTF to IFC Converter</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                Upload XTF Files
+            </div>
+            <div class="card-content">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <input type="file" name="xtfFiles" id="xtfFiles" multiple accept=".xtf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-2 file:border-black file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600">
+                    <p id="file-count" class="mt-2">Keine ausgewählt</p>
+                    <div id="preview-container" class="mt-4"></div>
+                </form>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="default_sohlenkote">Standard Sohlenkote:</label>
-            <input type="number" id="default_sohlenkote" name="default_sohlenkote" step="0.1" value="{{ config.default_sohlenkote }}" required>
+
+        <div class="card">
+            <div class="card-header">
+                Configuration
+            </div>
+            <div class="card-content">
+                <form id="config-form" class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="default_sohlenkote" class="block text-sm font-medium text-gray-700">default_sohlenkote</label>
+                        <input type="number" id="default_sohlenkote" name="default_sohlenkote" value="100" min="0" max="1000" step="0.01" class="pixel-input">
+                    </div>
+                    <div>
+                        <label for="default_durchmesser" class="block text-sm font-medium text-gray-700">default_durchmesser</label>
+                        <input type="number" id="default_durchmesser" name="default_durchmesser" value="0.8" min="0" max="1000" step="0.01" class="pixel-input">
+                    </div>
+                    <div>
+                        <label for="default_hoehe" class="block text-sm font-medium text-gray-700">default_hoehe</label>
+                        <input type="number" id="default_hoehe" name="default_hoehe" value="0.8" min="0" max="1000" step="0.01" class="pixel-input">
+                    </div>
+                    <div>
+                        <label for="default_wanddicke" class="block text-sm font-medium text-gray-700">default_wanddicke</label>
+                        <input type="number" id="default_wanddicke" name="default_wanddicke" value="0.04" min="0" max="1000" step="0.01" class="pixel-input">
+                    </div>
+                    <div>
+                        <label for="default_bodendicke" class="block text-sm font-medium text-gray-700">default_bodendicke</label>
+                        <input type="number" id="default_bodendicke" name="default_bodendicke" value="0.02" min="0" max="1000" step="0.01" class="pixel-input">
+                    </div>
+                    <div>
+                        <label for="default_rohrdicke" class="block text-sm font-medium text-gray-700">default_rohrdicke</label>
+                        <input type="number" id="default_rohrdicke" name="default_rohrdicke" value="0.02" min="0" max="1000" step="0.01" class="pixel-input">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="einfaerben" id="einfaerben" class="form-checkbox">
+                            <span class="ml-2">Einfärben</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="default_durchmesser">Standard Durchmesser:</label>
-            <input type="number" id="default_durchmesser" name="default_durchmesser" step="0.1" value="{{ config.default_durchmesser }}" required>
-        </div>
-        <div class="input-group">
-            <label for="default_hoehe">Standard Höhe:</label>
-            <input type="number" id="default_hoehe" name="default_hoehe" step="0.1" value="{{ config.default_hoehe }}" required>
-        </div>
-        <div class="input-group">
-            <label for="default_wanddicke">Standard Wanddicke:</label>
-            <input type="number" id="default_wanddicke" name="default_wanddicke" step="0.01" value="{{ config.default_wanddicke }}" required>
-        </div>
-        <div class="input-group">
-            <label for="default_bodendicke">Standard Bodendicke:</label>
-            <input type="number" id="default_bodendicke" name="default_bodendicke" step="0.01" value="{{ config.default_bodendicke }}" required>
-        </div>
-        <div class="input-group">
-            <label for="default_rohrdicke">Standard Rohrdicke:</label>
-            <input type="number" id="default_rohrdicke" name="default_rohrdicke" step="0.01" value="{{ config.default_rohrdicke }}" required>
-        </div>
-        <div class="input-group">
-            <label for="einfaerben">Einfärben:</label>
-            <input type="checkbox" id="einfaerben" name="einfaerben" {% if config.einfaerben %}checked{% endif %}>
-        </div>
-        <button type="submit">Konvertieren</button>
-    </form>
-    <div id="result"></div>
-    <div id="downloadLinks"></div>
+
+        <button id="convert-button" class="pixel-button">Convert to IFC</button>
+        <div id="alert-container" class="mt-4"></div>
+    </div>
 
     <script>
-        document.getElementById('convertForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const files = document.getElementById('xtfFiles').files;
-            for (let i = 0; i < files.length; i++) {
-                formData.append('xtfFiles', files[i]);
+        document.getElementById('xtfFiles').addEventListener('change', function(event) {
+            const files = Array.from(event.target.files);
+            document.getElementById('file-count').textContent = files.length + ' file(s) selected';
+
+            if (files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 64;
+                        canvas.height = 64;
+                        ctx.imageSmoothingEnabled = false;
+                        ctx.drawImage(img, 0, 0, 64, 64);
+                        const previewContainer = document.getElementById('preview-container');
+                        previewContainer.innerHTML = '<h3 class="text-xl mb-2">Preview:</h3>';
+                        const previewImg = document.createElement('img');
+                        previewImg.src = canvas.toDataURL();
+                        previewImg.alt = 'Pixel art preview';
+                        previewImg.className = 'border-2 border-black';
+                        previewImg.style.imageRendering = 'pixelated';
+                        previewContainer.appendChild(previewImg);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(files[0]);
             }
-            
-            try {
-                const response = await fetch('/convert', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                document.getElementById('result').textContent = data.message + (data.errors ? '\n\nFehler:\n' + data.errors : '');
-                
-                // Erstelle Download-Links
-                const downloadLinksDiv = document.getElementById('downloadLinks');
-                downloadLinksDiv.innerHTML = ''; // Leere vorherige Links
-                if (data.downloadLinks) {
-                    data.downloadLinks.forEach(link => {
-                        const a = document.createElement('a');
-                        a.href = link.url;
-                        a.textContent = `Download ${link.filename}`;
-                        a.download = link.filename;
-                        downloadLinksDiv.appendChild(a);
-                    });
+        });
+
+        document.getElementById('convert-button').addEventListener('click', function() {
+            const uploadForm = document.getElementById('upload-form');
+            const configForm = document.getElementById('config-form');
+            const formData = new FormData(uploadForm);
+
+            new FormData(configForm).forEach((value, key) => {
+                if (key === 'einfaerben') {
+                    formData.append(key, document.getElementById(key).checked);
+                } else {
+                    formData.append(key, value);
                 }
-            } catch (error) {
-                document.getElementById('result').textContent = 'Ein Fehler ist aufgetreten: ' + error.message;
-            }
+            });
+
+            fetch('/convert', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = '';
+
+                if (data.errors) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert bg-red-500';
+                    alertDiv.innerHTML = `<strong class="text-xl">Error:</strong> <span>${data.errors}</span>`;
+                    alertContainer.appendChild(alertDiv);
+                } else {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert';
+                    alertDiv.innerHTML = `<strong class="text-xl">Conversion Complete!</strong> <span>${data.message}</span>`;
+                    alertContainer.appendChild(alertDiv);
+
+                    const downloadList = document.createElement('ul');
+                    downloadList.className = 'mt-2';
+                    data.downloadLinks.forEach(link => {
+                        const listItem = document.createElement('li');
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = link.url;
+                        downloadLink.textContent = link.filename;
+                        downloadLink.className = 'block text-blue-500 underline mt-2';
+                        listItem.appendChild(downloadLink);
+                        downloadList.appendChild(listItem);
+                    });
+                    alertContainer.appendChild(downloadList);
+                }
+            })
+            .catch(error => {
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = '';
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert bg-red-500';
+                alertDiv.innerHTML = `<strong class="text-xl">Error:</strong> <span>${error.message}</span>`;
+                alertContainer.appendChild(alertDiv);
+            });
         });
     </script>
 </body>
