@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XTF zu IFC Konverter</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .input-group { margin-bottom: 10px; }
+        input[type="file"], input[type="number"], input[type="checkbox"], button { margin-top: 5px; }
+        #result, #downloadLinks { margin-top: 20px; }
+        #downloadLinks a { display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>XTF zu IFC Konverter</h1>
+    <form id="convertForm">
+        <div class="input-group">
+            <label for="xtfFiles">XTF-Dateien auswählen:</label>
+            <input type="file" id="xtfFiles" accept=".xtf" multiple required>
+        </div>
+        <div class="input-group">
+            <label for="default_sohlenkote">Standard Sohlenkote:</label>
+            <input type="number" id="default_sohlenkote" name="default_sohlenkote" step="0.1" value="{{ config.default_sohlenkote }}" required>
+        </div>
+        <div class="input-group">
+            <label for="default_durchmesser">Standard Durchmesser:</label>
+            <input type="number" id="default_durchmesser" name="default_durchmesser" step="0.1" value="{{ config.default_durchmesser }}" required>
+        </div>
+        <div class="input-group">
+            <label for="default_hoehe">Standard Höhe:</label>
+            <input type="number" id="default_hoehe" name="default_hoehe" step="0.1" value="{{ config.default_hoehe }}" required>
+        </div>
+        <div class="input-group">
+            <label for="default_wanddicke">Standard Wanddicke:</label>
+            <input type="number" id="default_wanddicke" name="default_wanddicke" step="0.01" value="{{ config.default_wanddicke }}" required>
+        </div>
+        <div class="input-group">
+            <label for="default_bodendicke">Standard Bodendicke:</label>
+            <input type="number" id="default_bodendicke" name="default_bodendicke" step="0.01" value="{{ config.default_bodendicke }}" required>
+        </div>
+        <div class="input-group">
+            <label for="default_rohrdicke">Standard Rohrdicke:</label>
+            <input type="number" id="default_rohrdicke" name="default_rohrdicke" step="0.01" value="{{ config.default_rohrdicke }}" required>
+        </div>
+        <div class="input-group">
+            <label for="einfaerben">Einfärben:</label>
+            <input type="checkbox" id="einfaerben" name="einfaerben" {% if config.einfaerben %}checked{% endif %}>
+        </div>
+        <button type="submit">Konvertieren</button>
+    </form>
+    <div id="result"></div>
+    <div id="downloadLinks"></div>
+
+    <script>
+        document.getElementById('convertForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const files = document.getElementById('xtfFiles').files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('xtfFiles', files[i]);
+            }
+            
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = data.message + (data.errors ? '\n\nFehler:\n' + data.errors : '');
+                
+                // Erstelle Download-Links
+                const downloadLinksDiv = document.getElementById('downloadLinks');
+                downloadLinksDiv.innerHTML = ''; // Leere vorherige Links
+                if (data.downloadLinks) {
+                    data.downloadLinks.forEach(link => {
+                        const a = document.createElement('a');
+                        a.href = link.url;
+                        a.textContent = `Download ${link.filename}`;
+                        a.download = link.filename;
+                        downloadLinksDiv.appendChild(a);
+                    });
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = 'Ein Fehler ist aufgetreten: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
