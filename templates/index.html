@@ -1,120 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XTF to IFC Converter</title>
     <style>
-        @font-face {
-            font-family: 'Pixelated';
-            src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
         body {
-            background-color: #e5e7eb;
-            font-family: 'Pixelated', monospace;
+            background-color: #5C6BC0;
+            font-family: 'Press Start 2P', cursive;
+            color: #FFFFFF;
+            line-height: 1.6;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: auto;
             padding: 20px;
+            transform: scale(0.8);
+            transform-origin: top center;
         }
         .text-shadow {
-            text-shadow: 2px 2px 0 #000;
+            text-shadow: 3px 3px 0 #2196F3, 6px 6px 0 #1565C0;
         }
         .pixel-button {
-            padding: 10px 20px;
-            font-family: 'Pixelated', monospace;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
             color: white;
-            border-bottom: 4px solid black;
-            border-right: 4px solid black;
-            background-color: #3B82F6;
-            transition: background-color 0.15s ease-in-out;
-            border-radius: 8px;
+            border: none;
+            background-color: #FF4081;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 #C2185B, 0 8px 0 #880E4F;
+            position: relative;
+            top: 0;
         }
-        .pixel-button:disabled {
-            background-color: #6B7280;
-            cursor: not-allowed;
+        .pixel-button:hover {
+            top: 4px;
+            box-shadow: 0 4px 0 #880E4F;
         }
-        .pixel-button:hover:not(:disabled) {
-            background-color: #2563EB;
-        }
-        .pixel-button:active:not(:disabled) {
-            background-color: #1D4ED8;
+        .pixel-button:active {
+            top: 8px;
+            box-shadow: none;
         }
         .pixel-input {
-            width: 100%;
-            padding: 5px;
-            font-family: 'Pixelated', monospace;
-            border: 2px solid black;
-            background-color: white;
+            width: 80%;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            border: 4px solid #FFD54F;
+            background-color: #FFF9C4;
             outline: none;
-            border-radius: 8px;
-        }
-        .pixel-input:focus {
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            color: #212121;
         }
         .card {
-            background-color: white;
-            border: 4px solid black;
+            background-color: #7986CB;
+            border: 4px solid #3F51B5;
             margin-bottom: 20px;
             padding: 20px;
-            border-radius: 8px;
+            box-shadow: 0 0 0 4px #3F51B5, 0 0 0 8px #303F9F, 0 0 0 12px #1A237E;
         }
         .card-header {
-            font-size: 1.5em;
+            font-size: 1.2em;
             font-weight: bold;
-        }
-        .card-content {
-            margin-top: 10px;
+            color: #FFD54F;
+            text-shadow: 2px 2px 0 #FF6F00;
         }
         .form-checkbox {
             appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid black;
-            background: white;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #FFD54F;
+            background: #FFF9C4;
             margin-right: 10px;
-            border-radius: 4px;
-            vertical-align: middle;
+            position: relative;
         }
-
+        .form-checkbox:checked::before {
+            content: '✔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FF4081;
+            font-size: 20px;
+        }
         .checkbox-container {
-            display: flex;
-            align-items: center;
-            margin-top: 10px;  /* Passe den Wert nach Bedarf an */
-        }
-
-        .form-checkbox:checked {
-            background: #3B82F6;
+            margin-right: 20%;
         }
         .alert {
-            background-color: #10B981;
-            border: 4px solid black;
+            background-color: #66BB6A;
+            border: 4px solid #4CAF50;
             color: white;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 0 4px #4CAF50, 0 0 0 8px #388E3C, 0 0 0 12px #1B5E20;
         }
         .footer {
             font-size: 12px;
-            color: #555;
-            text-align: left;
-            margin-top: -10px;
-            margin-bottom: 20px;
+            color: #B2EBF2;
+            text-shadow: 1px 1px 0 #0097A7;
+            position: absolute;  /* Geändert */
+            bottom: 10px;  /* Geändert */
+            left: 0;
+            right: 0;
+            text-align: center;
+            transform: scale(1.25);  /* Kompensiert die Skalierung des Containers */
+        }
+        #preview-container img {
+            image-rendering: pixelated;
+            width: 128px;
+            height: 128px;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .custom-file-input {
+            display: inline-block;
+            padding: 10px 20px;
+            font-family: 'Press Start 2P', cursive;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            box-shadow: 0 4px 0 #45a049, 0 8px 0 #388E3C;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 0;
+            cursor: pointer;
+        }
+        .custom-file-input:hover {
+            top: 4px;
+            box-shadow: 0 4px 0 #388E3C;
+        }
+        .custom-file-input:active {
+            top: 8px;
+            box-shadow: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="text-4xl font-bold mb-4 text-center text-shadow">XTF to IFC Converter</h1>
-        <div class="footer" style="text-align: left;">2024 by Martin Vanek</div>
         <div class="card">
-            <div class="card-header">
-                Upload XTF Files
-            </div>
+            <div class="card-header">Upload XTF Files</div>
             <div class="card-content">
                 <form id="upload-form" enctype="multipart/form-data">
-                    <input type="file" name="xtfFiles" id="xtfFiles" multiple accept=".xtf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-2 file:border-black file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600">
+                    <div class="file-input-wrapper">
+                        <span class="custom-file-input">Dateien auswählen</span>
+                        <input type="file" name="xtfFiles" id="xtfFiles" multiple accept=".xtf">
+                    </div>
                     <p id="file-count" class="mt-2">Keine ausgewählt</p>
                     <div id="preview-container" class="mt-4"></div>
                 </form>
@@ -122,33 +163,31 @@
         </div>
 
         <div class="card">
-            <div class="card-header">
-                Configuration
-            </div>
+            <div class="card-header">Configuration</div>
             <div class="card-content">
                 <form id="config-form" class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="default_sohlenkote" class="block text-sm font-medium text-gray-700">default_sohlenkote</label>
+                        <label for="default_sohlenkote">Default Sohlenkote</label>
                         <input type="number" id="default_sohlenkote" name="default_sohlenkote" value="100" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
-                        <label for="default_durchmesser" class="block text-sm font-medium text-gray-700">default_durchmesser</label>
+                        <label for="default_durchmesser">Default Durchmesser</label>
                         <input type="number" id="default_durchmesser" name="default_durchmesser" value="0.8" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
-                        <label for="default_hoehe" class="block text-sm font-medium text-gray-700">default_hoehe</label>
+                        <label for="default_hoehe">Default Höhe</label>
                         <input type="number" id="default_hoehe" name="default_hoehe" value="0.8" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
-                        <label for="default_wanddicke" class="block text-sm font-medium text-gray-700">default_wanddicke</label>
+                        <label for="default_wanddicke">Default Wanddicke</label>
                         <input type="number" id="default_wanddicke" name="default_wanddicke" value="0.04" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
-                        <label for="default_bodendicke" class="block text-sm font-medium text-gray-700">default_bodendicke</label>
+                        <label for="default_bodendicke">Default Bodendicke</label>
                         <input type="number" id="default_bodendicke" name="default_bodendicke" value="0.02" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
-                        <label for="default_rohrdicke" class="block text-sm font-medium text-gray-700">default_rohrdicke</label>
+                        <label for="default_rohrdicke">Default Rohrdicke</label>
                         <input type="number" id="default_rohrdicke" name="default_rohrdicke" value="0.02" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div class="col-span-2 checkbox-container">
@@ -164,6 +203,8 @@
         <button id="convert-button" class="pixel-button">Convert to IFC</button>
         <div id="alert-container" class="mt-4"></div>
     </div>
+
+    <div class="footer">2024 by Martin Vanek</div>
 
     <script>
         document.getElementById('xtfFiles').addEventListener('change', function(event) {
