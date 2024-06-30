@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+    background-color: #d9e3ea;
+    font-family: 'Press Start 2P', cursive;
+    color: #000000;
+    line-height: 1.6;
+}
+
+.custom-file-input {
+    display: inline-block;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    background-color: #4CAF50;
+    border: none;
+    box-shadow: 0 4px 0 #45a049, 0 8px 0 #388E3C;
+    transition: all 0.3s ease;
+    position: relative;
+    top: 0;
+    cursor: pointer;
+}
+
+.custom-file-input:hover {
+    top: 4px;
+    box-shadow: 0 4px 0 #388E3C;
+}
+
+.custom-file-input:active {
+    top: 8px;
+    box-shadow: none;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    transform: scale(0.8);
+    transform-origin: top center;
+}
+
+.text-shadow {
+    text-shadow: 3px 3px 0 #2196F3, 6px 6px 0 #1565C0;
+}
+
+.pixel-button {
+    padding: 15px 30px;
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    border: none;
+    background-color: #FF4081;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 0 #C2185B, 0 8px 0 #880E4F;
+    position: relative;
+    top: 0;
+}
+
+.pixel-button:hover {
+    top: 4px;
+    box-shadow: 0 4px 0 #880E4F;
+}
+
+.pixel-button:active {
+    top: 8px;
+    box-shadow: none;
+}
+
+.pixel-input {
+    width: 80%;
+    padding: 10px;
+    font-family: 'Press Start 2P', cursive;
+    border: 4px solid #FFD54F;
+    background-color: #FFF9C4;
+    outline: none;
+    color: #212121;
+}
+
+.card {
+    background-color: #7986CB;
+    border: 4px solid #3F51B5;
+    margin-bottom: 20px;
+    padding: 20px;
+    box-shadow: 0 0 0 4px #3F51B5, 0 0 0 8px #303F9F, 0 0 0 12px #1A237E;
+}
+
+.card-header {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #FFD54F;
+    text-shadow: 2px 2px 0 #FF6F00;
+}
+
+.form-checkbox {
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    border: 4px solid #FFD54F;
+    background: #FFF9C4;
+    margin-right: 10px;
+    position: relative;
+}
+
+.form-checkbox:checked::before {
+    content: 'X';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #FF4081;
+    font-size: 20px;
+}
+
+.checkbox-container {
+    margin-right: 20%;
+}
+
+.alert {
+    background-color: #66BB6A;
+    border: 4px solid #4CAF50;
+    color: white;
+    padding: 15px;
+    box-shadow: 0 0 0 4px #4CAF50, 0 0 0 8px #388E3C, 0 0 0 12px #1B5E20;
+}
+
+.footer {
+    font-size: 12px;
+    color: #e527a9;
+    text-shadow: 1px 1px 0 #47085a;
+    position: absolute;  
+    bottom: 10px; 
+    left: 0;
+    right: 0;
+    text-align: center;
+    transform: scale(1.25); 
+}
+
+#preview-container img {
+    image-rendering: pixelated;
+    width: 128px;
+    height: 128px;
+}
+
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-input-wrapper input[type=file] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
