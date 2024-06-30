@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, render_template, request, jsonify, send_file
 import os
 import tempfile
@@ -8,12 +9,18 @@ from ifc_generator import create_ifc
 from default_values import read_config
 import threading
 import time
+import signal
+import sys
 
 app = Flask(__name__)
 
 ALLOWED_EXTENSIONS = {'xtf'}
-BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'ifc_converter_temp')
+BASE_TEMP_DIR = '/tmp/ifc_converter_temp'
 FILE_LIFETIME = 600  # 10 minutes
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -21,7 +28,7 @@ def allowed_file(filename):
 def ensure_temp_dir():
     if not os.path.exists(BASE_TEMP_DIR):
         os.makedirs(BASE_TEMP_DIR)
-    print(f"Ensured temporary directory: {BASE_TEMP_DIR}")
+    logger.info(f"Ensured temporary directory: {BASE_TEMP_DIR}")
 
 def cleanup_old_files():
     while True:
@@ -35,9 +42,26 @@ def cleanup_old_files():
 def list_directory(path):
     try:
         files = os.listdir(path)
-        print(f"Contents of {path}: {files}")
+        logger.info(f"Contents of {path}: {files}")
     except FileNotFoundError:
-        print(f"Directory not found: {path}")
+        logger.error(f"Directory not found: {path}")
+
+def remove_pycache():
+    # Remove the __pycache__ directory
+    for root, dirs, files in os.walk('.'):
+        for dir_name in dirs:
+            if dir_name == '__pycache__':
+                shutil.rmtree(os.path.join(root, dir_name), ignore_errors=True)
+                logger.info(f"Removed __pycache__ directory: {os.path.join(root, dir_name)}")
+
+def handle_exit_signal(sig, frame):
+    logger.info('Shutting down and cleaning up...')
+    remove_pycache()
+    sys.exit(0)
+
+# Register signal handler
+signal.signal(signal.SIGINT, handle_exit_signal)
+signal.signal(signal.SIGTERM, handle_exit_signal)
 
 cleanup_thread = threading.Thread(target=cleanup_old_files, daemon=True)
 cleanup_thread.start()
@@ -76,11 +100,11 @@ def convert():
             filename = secure_filename(file.filename)
             xtf_path = os.path.join(BASE_TEMP_DIR, filename)
 
-            file.save(xtf_path)
-            print(f'File saved to {xtf_path}')
-            list_directory(BASE_TEMP_DIR)
-
             try:
+                file.save(xtf_path)
+                logger.info(f'File saved to {xtf_path}')
+                list_directory(BASE_TEMP_DIR)
+
                 parser = XTFParser()
                 data = parser.parse(xtf_path)
                 
@@ -94,7 +118,7 @@ def convert():
                 time.sleep(1)  # Wait for a second to ensure file is created
 
                 if os.path.exists(ifc_path):
-                    print(f'IFC file successfully created: {ifc_path}')
+                    logger.info(f'IFC file successfully created: {ifc_path}')
                     list_directory(BASE_TEMP_DIR)
                     converted_files.append(ifc_filename)
                     
@@ -104,16 +128,17 @@ def convert():
                         'filename': ifc_filename
                     })
                 else:
-                    print(f'Failed to create IFC file: {ifc_path}')
+                    logger.error(f'Failed to create IFC file: {ifc_path}')
                     list_directory(BASE_TEMP_DIR)
             except Exception as e:
+                logger.error(f'Fehler bei der Konvertierung von {filename}: {str(e)}')
                 errors.append(f'Fehler bei der Konvertierung von {filename}: {str(e)}')
             finally:
                 # Entferne die temporäre XTF-Datei
                 if os.path.exists(xtf_path):
                     os.remove(xtf_path)
                 else:
-                    print(f'Failed to remove XTF file: {xtf_path}')
+                    logger.error(f'Failed to remove XTF file: {xtf_path}')
 
     if converted_files:
         success_message = f'Erfolgreich konvertierte Dateien: {", ".join(converted_files)}'
@@ -134,16 +159,16 @@ def convert():
 @app.route('/download/<filename>')
 def download_file(filename):
     file_path = os.path.join(BASE_TEMP_DIR, filename)
-    print(f'Trying to send file: {file_path}')
+    logger.info(f'Trying to send file: {file_path}')
     list_directory(BASE_TEMP_DIR)
     for i in range(5):  # Check up to 5 times, waiting each time
         if os.path.exists(file_path):
-            print('File exists and will be sent')
+            logger.info('File exists and will be sent')
             return send_file(file_path, as_attachment=True)
         else:
-            print(f'File not found, waiting ({i + 1}/5)')
+            logger.warning(f'File not found, waiting ({i + 1}/5)')
             time.sleep(1)
-    print('File not found after waiting')
+    logger.error('File not found after waiting')
     return "File not found", 404
 
 if __name__ == '__main__':
