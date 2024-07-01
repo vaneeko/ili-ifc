@@ -1,9 +1,8 @@
 import xml.etree.ElementTree as ET
 import logging
-from default_values import get_default_values
 
 class XTFParser:
-    def parse(self, xtf_file_path):
+    def parse(self, xtf_file_path, config):
         try:
             tree = ET.parse(xtf_file_path)
         except ET.ParseError as e:
@@ -13,7 +12,13 @@ class XTFParser:
         root = tree.getroot()
         namespace = {'ili': 'http://www.interlis.ch/INTERLIS2.3'}
 
-        default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, default_rohrdicke, einfaerben = get_default_values()
+        default_sohlenkote = config['default_sohlenkote']
+        default_durchmesser = config['default_durchmesser']
+        default_hoehe = config['default_hoehe']
+        default_wanddicke = config['default_wanddicke']
+        default_bodendicke = config['default_bodendicke']
+        default_rohrdicke = config['default_rohrdicke']
+        einfaerben = config['einfaerben']
 
         try:
             haltungspunkte = self.parse_haltungspunkte(root, namespace, default_sohlenkote)
@@ -31,17 +36,13 @@ class XTFParser:
             'normschachte': normschachte,
             'kanale': kanale,
             'haltungen': haltungen,
-            'default_durchmesser': default_durchmesser,
-            'default_hoehe': default_hoehe,
-            'default_sohlenkote': default_sohlenkote,
-            'default_wanddicke': default_wanddicke,
-            'default_bodendicke': default_bodendicke,
-            'default_rohrdicke': default_rohrdicke,
             'nicht_verarbeitete_kanale': nicht_verarbeitete_kanale,
             'nicht_verarbeitete_haltungen': nicht_verarbeitete_haltungen,
             'nicht_verarbeitete_normschachte': nicht_verarbeitete_normschachte,
-            'defaults': (default_sohlenkote, default_durchmesser, default_hoehe, default_wanddicke, default_bodendicke, einfaerben)
         }
+
+        # Füge die Konfigurationswerte zu den Daten hinzu
+        data.update(config)
 
         return data
 
