@@ -26,18 +26,12 @@ Erforderliche Abhängigkeiten installieren:
 pip install ifcopenshell
 pip install flask
 ```
-## Konfiguration
-Erstellen einer config.txt Datei im Stammverzeichnis des Projekts mit folgendem Format:
-```
-xtf_files = C:\pfad\zu\xtf\dateien\
-output_folder = C:\pfad\zum\ausgabe\ordner\
-```
 ## Nutzung
 Starten des Tools mit Python:
 ```
-python xtf_to_ifc.py
+python app.py
 ```
-Das Tool liest die XTF-Dateien aus dem in config.txt angegebenen Verzeichnis, konvertiert sie in IFC-Dateien und speichert die Ausgaben im angegebenen Ausgabeverzeichnis.
+Navigieren zu: http://127.0.0.1:5000/
 
 ## Protokollierung
 Protokolle werden erstellt, um detaillierte Informationen über den Konvertierungsprozess bereitzustellen. Diese Protokolle können verwendet werden, um Probleme zu identifizieren und zu beheben, die während der Konvertierung auftreten können.
