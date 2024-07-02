@@ -23,8 +23,7 @@ cd ili-ifc
 ```
 Erforderliche Abhängigkeiten installieren:
 ```
-pip install ifcopenshell
-pip install flask
+pip install -r requirements.txt
 ```
 ## Nutzung
 Starten des Tools mit Python:
