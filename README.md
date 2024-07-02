@@ -22,6 +22,7 @@ git clone https://github.com/vaneeko/ili-ifc.git
 cd ili-ifc
 ```
 Erforderliche Abhängigkeiten installieren:
+Das Tool benötigt Flask und ifcopenshell.
 ```
 pip install -r requirements.txt
 ```
