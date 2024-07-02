@@ -8,7 +8,6 @@ def create_ifc_project_structure(ifc_file):
     logging.info("Erstelle IFC-Projektstruktur.")
     project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
     
-    # Erstellen Sie den GeometricRepresentationContext
     context = ifc_file.create_entity("IfcGeometricRepresentationContext",
         ContextType="Model",
         CoordinateSpaceDimension=3,
@@ -17,7 +16,6 @@ def create_ifc_project_structure(ifc_file):
         ContextIdentifier="Building Model"
     )
     
-    # Erstellen Sie das ProjectedCRS
     projected_crs = ifc_file.create_entity("IfcProjectedCRS",
         Name="CH1903+ / LV95",
         Description="Swiss Coordinate System",
@@ -27,7 +25,6 @@ def create_ifc_project_structure(ifc_file):
         MapZone="CH1903+ / LV95"
     )
     
-    # Erstellen Sie die MapConversion
     map_conversion = ifc_file.create_entity("IfcMapConversion",
         SourceCRS=context,
         TargetCRS=projected_crs,
@@ -39,7 +36,6 @@ def create_ifc_project_structure(ifc_file):
         Scale=1.0
     )
     
-    # Verknüpfen Sie die MapConversion mit dem Projekt
     project.RepresentationContexts = [context]
     project.UnitsInContext = ifc_file.create_entity("IfcUnitAssignment", Units=[
         ifc_file.create_entity("IfcSIUnit", UnitType="LENGTHUNIT", Name="METRE"),
