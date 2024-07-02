@@ -1,7 +1,14 @@
 import ifcopenshell
 from utils import add_color, generate_guid, create_local_placement, create_cartesian_point, create_property_single_value
 
-def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, default_durchmesser, default_hoehe, default_sohlenkote, default_wanddicke, default_bodendicke, abwasserknoten_group, einfaerben, data):
+def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, abwasserknoten_group, data):
+    default_sohlenkote = data['default_sohlenkote']
+    default_durchmesser = data['default_durchmesser']
+    default_hoehe = data['default_hoehe']
+    default_wanddicke = data['default_wanddicke']
+    default_bodendicke = data['default_bodendicke']
+    einfaerben = data['einfaerben']
+
     if abwasserknoten:
         lage = abwasserknoten.get('lage', {})
         x_mitte = float(lage.get('c1'))

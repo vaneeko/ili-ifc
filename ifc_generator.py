@@ -23,10 +23,12 @@ def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point
     else:
         return start_z
 
-def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group, einfaerben, default_sohlenkote):
+def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group):
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
-    default_rohrdicke = data['default_rohrdicke']  # Verwende den Standardwert für die Rohrdicke
+    default_rohrdicke = data['default_rohrdicke']
+    default_sohlenkote = data['default_sohlenkote']
+    einfaerben = data['einfaerben']
 
     for haltung in haltungen:
         innendurchmesser = haltung.get('durchmesser', default_durchmesser)
@@ -113,13 +115,13 @@ def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group, einfaer
             RelatingGroup=haltungen_group
         )
 
-def create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group, einfaerben):
+def create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group):
     logging.info(f"Füge Normschächte hinzu: {len(data['normschachte'])}")
     for ns in data['normschachte']:
         abwasserknoten = next((ak for ak in data['abwasserknoten'] if ak['id'] == ns['abwasserknoten_id']), None)
-        create_ifc_normschacht(ifc_file, ns, abwasserknoten, site, context, data['default_durchmesser'], data['default_hoehe'], data['default_sohlenkote'], data['default_wanddicke'], data['default_bodendicke'], abwasserknoten_group, einfaerben, data)
+        create_ifc_normschacht(ifc_file, ns, abwasserknoten, site, context, abwasserknoten_group, data)
 
-def create_ifc(ifc_file_path, data, einfaerben):
+def create_ifc(ifc_file_path, data):
     logging.info("Erstelle IFC-Datei...")
 
     ifc_file = ifcopenshell.file(schema="IFC4X3")
@@ -129,10 +131,8 @@ def create_ifc(ifc_file_path, data, einfaerben):
     abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
     haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
 
-    default_sohlenkote = data['default_sohlenkote']
-
-    create_ifc_haltungen(ifc_file, data, site, context, haltungen_group, einfaerben, default_sohlenkote)
-    create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group, einfaerben)
+    create_ifc_haltungen(ifc_file, data, site, context, haltungen_group)
+    create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group)
 
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[abwasserknoten_group])
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[haltungen_group])
