@@ -24,6 +24,7 @@ cd ili-ifc
 Erforderliche Abhängigkeiten installieren:
 ```
 pip install ifcopenshell
+pip install flask
 ```
 ## Konfiguration
 Erstellen einer config.txt Datei im Stammverzeichnis des Projekts mit folgendem Format:
