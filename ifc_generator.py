@@ -7,8 +7,53 @@ import math
 def create_ifc_project_structure(ifc_file):
     logging.info("Erstelle IFC-Projektstruktur.")
     project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
-    context = ifc_file.create_entity("IfcGeometricRepresentationContext", ContextType="Model", ContextIdentifier="Building Model")
-    site = ifc_file.create_entity("IfcSite", GlobalId=generate_guid(), Name="Perimeter")
+    
+    # Erstellen Sie den GeometricRepresentationContext
+    context = ifc_file.create_entity("IfcGeometricRepresentationContext",
+        ContextType="Model",
+        CoordinateSpaceDimension=3,
+        Precision=1e-5,
+        WorldCoordinateSystem=ifc_file.create_entity("IfcAxis2Placement3D", Location=ifc_file.create_entity("IfcCartesianPoint", Coordinates=(0., 0., 0.))),
+        ContextIdentifier="Building Model"
+    )
+    
+    # Erstellen Sie das ProjectedCRS
+    projected_crs = ifc_file.create_entity("IfcProjectedCRS",
+        Name="CH1903+ / LV95",
+        Description="Swiss Coordinate System",
+        GeodeticDatum="CH1903+",
+        VerticalDatum="LN02",
+        MapProjection="Swiss Oblique Mercator",
+        MapZone="CH1903+ / LV95"
+    )
+    
+    # Erstellen Sie die MapConversion
+    map_conversion = ifc_file.create_entity("IfcMapConversion",
+        SourceCRS=context,
+        TargetCRS=projected_crs,
+        Eastings=2600000.0,  # Anpassen an den Ursprung Ihres Projektgebiets
+        Northings=1200000.0,  # Anpassen an den Ursprung Ihres Projektgebiets
+        OrthogonalHeight=0.0,
+        XAxisAbscissa=1.0,
+        XAxisOrdinate=0.0,
+        Scale=1.0
+    )
+    
+    # Verknüpfen Sie die MapConversion mit dem Projekt
+    project.RepresentationContexts = [context]
+    project.UnitsInContext = ifc_file.create_entity("IfcUnitAssignment", Units=[
+        ifc_file.create_entity("IfcSIUnit", UnitType="LENGTHUNIT", Name="METRE"),
+        ifc_file.create_entity("IfcSIUnit", UnitType="AREAUNIT", Name="SQUARE_METRE"),
+        ifc_file.create_entity("IfcSIUnit", UnitType="VOLUMEUNIT", Name="CUBIC_METRE"),
+    ])
+
+    site = ifc_file.create_entity("IfcSite", 
+        GlobalId=generate_guid(), 
+        Name="Perimeter",
+        RefLatitude=(47, 22, 7),  # Anpassen an Ihren Standort
+        RefLongitude=(8, 32, 23),  # Anpassen an Ihren Standort
+        RefElevation=408.0  # Anpassen an Ihre Höhe über dem Meeresspiegel
+    )
    
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=project, RelatedObjects=[site])
     
