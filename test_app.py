@@ -53,7 +53,6 @@ def test_convert_success(client):
     assert len(response_data['downloadLinks']) > 0
     logger.info('Conversion success message validated')
 
-    # Überprüfe, ob die konvertierte Datei im temporären Verzeichnis existiert
     for link in response_data['downloadLinks']:
         filename = link['filename']
         file_path = os.path.join('/tmp/ifc_converter_temp', filename)
