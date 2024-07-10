@@ -1,5 +1,5 @@
 import ifcopenshell
-from utils import add_color, generate_guid, create_local_placement, create_cartesian_point, create_property_single_value
+from utils.common import add_color, generate_guid, create_local_placement, create_cartesian_point, create_property_single_value
 
 def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, abwasserknoten_group, data):
     default_sohlenkote = data['default_sohlenkote']

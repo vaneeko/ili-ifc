@@ -1,7 +1,7 @@
 import ifcopenshell
 import logging
-from utils import add_color, generate_guid, add_property_set, create_local_placement, create_cartesian_point, create_swept_disk_solid, create_property_single_value
-from graphics_ns import create_ifc_normschacht
+from utils.common import add_color, generate_guid, add_property_set, create_local_placement, create_cartesian_point, create_swept_disk_solid, create_property_single_value
+from utils.graphics_ns import create_ifc_normschacht
 import math
 
 def create_ifc_project_structure(ifc_file):
@@ -28,8 +28,8 @@ def create_ifc_project_structure(ifc_file):
     map_conversion = ifc_file.create_entity("IfcMapConversion",
         SourceCRS=context,
         TargetCRS=projected_crs,
-        Eastings=2600000.0,  # Anpassen an den Ursprung Ihres Projektgebiets
-        Northings=1200000.0,  # Anpassen an den Ursprung Ihres Projektgebiets
+        Eastings=2600000.0,  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN
+        Northings=1200000.0,  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN
         OrthogonalHeight=0.0,
         XAxisAbscissa=1.0,
         XAxisOrdinate=0.0,
@@ -46,9 +46,9 @@ def create_ifc_project_structure(ifc_file):
     site = ifc_file.create_entity("IfcSite", 
         GlobalId=generate_guid(), 
         Name="Perimeter",
-        RefLatitude=(47, 22, 7),  # Anpassen an Ihren Standort
-        RefLongitude=(8, 32, 23),  # Anpassen an Ihren Standort
-        RefElevation=408.0  # Anpassen an Ihre Höhe über dem Meeresspiegel
+        RefLatitude=(47, 22, 7),  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN, Standort
+        RefLongitude=(8, 32, 23),  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN, Standort
+        RefElevation=408.0  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN, Höhe über Meeresspiegel
     )
    
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=project, RelatedObjects=[site])

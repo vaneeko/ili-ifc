@@ -40,7 +40,7 @@ def test_convert_success(client):
         'default_rohrdicke': '0.02',
         'einfaerben': 'false'
     }
-    with open('tests/testfile.xtf', 'rb') as test_file:
+    with open('tests/testfile_complete.xtf', 'rb') as test_file:
         response = client.post('/convert', data={
             'xtfFiles': test_file,
             **data

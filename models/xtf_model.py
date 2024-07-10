@@ -41,7 +41,12 @@ class XTFParser:
             'nicht_verarbeitete_normschachte': nicht_verarbeitete_normschachte,
         }
 
-        # Füge die Konfigurationswerte zu den Daten hinzu
+        min_x, min_y = self.find_min_coordinates(data)
+        data['min_coordinates'] = {
+            'x': min_x,
+            'y': min_y
+        }
+
         data.update(config)
 
         return data
@@ -228,6 +233,17 @@ class XTFParser:
 
     def transform_coordinate(self, coordinate):
         return float(coordinate)
+
+    def find_min_coordinates(self, data):
+        min_x = float('inf')
+        min_y = float('inf')
+        
+        for element in data['haltungspunkte'] + data['abwasserknoten'] + data['normschachte']:
+            if 'lage' in element:
+                min_x = min(min_x, float(element['lage']['c1']))
+                min_y = min(min_y, float(element['lage']['c2']))
+        
+        return min_x, min_y
 
     def parse_haltungen(self, root, namespace, haltungspunkte, default_sohlenkote):
         haltungen = []
