@@ -28,8 +28,8 @@ def create_ifc_project_structure(ifc_file):
     map_conversion = ifc_file.create_entity("IfcMapConversion",
         SourceCRS=context,
         TargetCRS=projected_crs,
-        Eastings=2600000.0,  # Anpassen an den Ursprung Ihres Projektgebiets
-        Northings=1200000.0,  # Anpassen an den Ursprung Ihres Projektgebiets
+        Eastings=2600000.0,  # Anpassen an den Ursprung des Projektgebiets
+        Northings=1200000.0,  # Anpassen an den Ursprung des Projektgebiets
         OrthogonalHeight=0.0,
         XAxisAbscissa=1.0,
         XAxisOrdinate=0.0,
@@ -46,9 +46,9 @@ def create_ifc_project_structure(ifc_file):
     site = ifc_file.create_entity("IfcSite", 
         GlobalId=generate_guid(), 
         Name="Perimeter",
-        RefLatitude=(47, 22, 7),  # Anpassen an Ihren Standort
-        RefLongitude=(8, 32, 23),  # Anpassen an Ihren Standort
-        RefElevation=408.0  # Anpassen an Ihre Höhe über dem Meeresspiegel
+        RefLatitude=(47, 22, 7),  # Anpassen Standort
+        RefLongitude=(8, 32, 23),  # Anpassen Standort
+        RefElevation=408.0  # Höhe über Meeresspiegel
     )
    
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=project, RelatedObjects=[site])
