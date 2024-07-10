@@ -1,20 +1,18 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=0.75">
     <title>XTF to IFC Converter</title>
-    <link id="theme-stylesheet" rel="stylesheet" href="{{ url_for('static', filename='styles5.css') }}">
+    <link id="theme-stylesheet" rel="stylesheet" href="{{ url_for('static', filename='css/styles4.css') }}">
     <script>
         function switchStyle(styleName) {
+            console.log("Switching to style:", styleName);
             document.getElementById('theme-stylesheet').setAttribute('href', styleName);
         }
     </script>
 </head>
 <body>
-
-</div>
     <div class="container">
         <h1 class="text-4xl font-bold mb-4 text-center text-shadow">XTF to IFC Converter</h1>
         <div class="card">
@@ -79,15 +77,16 @@
         <div class="card">
             <div class="card-header">Switch Theme</div>
             <div class="card-content">
-                <button onclick="switchStyle('{{ url_for('static', filename='styles1.css') }}')" class="pixel-button">Pixelart</button>
-                <button onclick="switchStyle('{{ url_for('static', filename='styles2.css') }}')" class="pixel-button">Dark</button>
-                <button onclick="switchStyle('{{ url_for('static', filename='styles3.css') }}')" class="pixel-button">Rainbow</button>
-                <button onclick="switchStyle('{{ url_for('static', filename='styles4.css') }}')" class="pixel-button">Modern</button>
-                <button onclick="switchStyle('{{ url_for('static', filename='styles5.css') }}')" class="pixel-button">Modern Dark</button>
+                <button onclick="switchStyle('{{ url_for('static', filename='css/styles1.css') }}')" class="pixel-button">Pixelart</button>
+                <button onclick="switchStyle('{{ url_for('static', filename='css/styles2.css') }}')" class="pixel-button">Dark</button>
+                <button onclick="switchStyle('{{ url_for('static', filename='css/styles3.css') }}')" class="pixel-button">Rainbow</button>
+                <button onclick="switchStyle('{{ url_for('static', filename='css/styles4.css') }}')" class="pixel-button">Modern</button>
+                <button onclick="switchStyle('{{ url_for('static', filename='css/styles5.css') }}')" class="pixel-button">Modern Dark</button>
             </div>
         </div>
 
-    <div class="footer">2024 Martin Vanek</div>
+        <div class="footer">2024 Martin Vanek</div>
+    </div>
 
     <script>
         document.getElementById('xtfFiles').addEventListener('change', function(event) {

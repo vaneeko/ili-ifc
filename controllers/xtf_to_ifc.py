@@ -1,8 +1,8 @@
 import logging
 import os
 import shutil
-from data_parser_xtf import XTFParser
-from ifc_generator import create_ifc
+from models.xtf_model import XTFParser
+from models.ifc_model import create_ifc
 
 def setup_logging():
     logging.basicConfig(level=logging.DEBUG, 

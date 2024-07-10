@@ -1,7 +1,7 @@
 import ifcopenshell
 import logging
-from utils import add_color, generate_guid, add_property_set, create_local_placement, create_cartesian_point, create_swept_disk_solid, create_property_single_value
-from graphics_ns import create_ifc_normschacht
+from utils.common import add_color, generate_guid, add_property_set, create_local_placement, create_cartesian_point, create_swept_disk_solid, create_property_single_value
+from utils.graphics_ns import create_ifc_normschacht
 import math
 
 def create_ifc_project_structure(ifc_file):
