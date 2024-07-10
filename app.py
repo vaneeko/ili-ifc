@@ -6,6 +6,7 @@ import signal
 import sys
 from controllers.conversion_controller import handle_conversion_request, BASE_TEMP_DIR
 from utils.cleanup import cleanup_old_files, remove_pycache
+from config.default_config import DEFAULT_CONFIG
 import threading
 
 app = Flask(__name__, 
@@ -15,16 +16,6 @@ app = Flask(__name__,
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-DEFAULT_CONFIG = {
-    'default_sohlenkote': 405.0,
-    'default_durchmesser': 0.8,
-    'default_hoehe': 0.8,
-    'default_wanddicke': 0.04,
-    'default_bodendicke': 0.02,
-    'default_rohrdicke': 0.02,
-    'einfaerben': False
-}
 
 def handle_exit_signal(sig, frame):
     logger.info('Shutting down and cleaning up...')
