@@ -43,6 +43,26 @@ body {
     text-shadow: 3px 3px 0 #2196F3, 6px 6px 0 #1565C0;
 }
 
+.switch-theme-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.switch-theme-buttons .pixel-button {
+    padding: 8px 16px;
+    font-size: 0.8em;  /* Kleinere Schriftgröße */
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    border: none;
+    background-color: #E91E63;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 0 #C2185B, 0 8px 0 #880E4F;
+    position: relative;
+    top: 0;
+}
+
 .pixel-button {
     padding: 15px 30px;
     font-family: 'Press Start 2P', cursive;

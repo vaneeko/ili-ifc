@@ -4,11 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=0.75">
     <title>XTF to IFC Converter</title>
-    <link id="theme-stylesheet" rel="stylesheet" href="{{ url_for('static', filename='css/styles4.css') }}">
+    <link id="theme-stylesheet" rel="stylesheet" href="{{ url_for('static', filename='css/styles5.css') }}">
     <script>
         function switchStyle(styleName) {
             console.log("Switching to style:", styleName);
             document.getElementById('theme-stylesheet').setAttribute('href', styleName);
+        }
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            const previewContainer = document.getElementById('preview-container');
+            previewContainer.innerHTML = '';
+            document.getElementById('file-count').textContent = files.length + ' Datei(en) ausgewählt';
+
+            files.forEach(file => {
+                const fileDiv = document.createElement('div');
+                const fileNameSpan = document.createElement('span');
+                fileNameSpan.textContent = file.name;
+                fileDiv.appendChild(fileNameSpan);
+                previewContainer.appendChild(fileDiv);
+            });
+        }
+
+        function handleConversion() {
+            const uploadForm = document.getElementById('upload-form');
+            const configForm = document.getElementById('config-form');
+            const formData = new FormData(uploadForm);
+
+            new FormData(configForm).forEach((value, key) => {
+                if (key === 'einfaerben') {
+                    formData.append(key, document.getElementById(key).checked);
+                } else {
+                    formData.append(key, value);
+                }
+            });
+
+            fetch('/convert', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                const alertContainer = document.getElementById('alert-container');
+                const outputList = document.getElementById('output-list');
+                alertContainer.innerHTML = '';
+                outputList.innerHTML = '';
+
+                if (data.errors) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert bg-red-500';
+                    alertDiv.innerHTML = `<strong class="text-xl">Error:</strong> <span>${data.errors}</span>`;
+                    alertContainer.appendChild(alertDiv);
+                } else {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert';
+                    alertDiv.innerHTML = `<strong class="text-xl">Conversion Complete!</strong> <span>${data.message}</span>`;
+                    alertContainer.appendChild(alertDiv);
+
+                    data.downloadLinks.forEach(link => {
+                        const fileDiv = document.createElement('div');
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = link.url;
+                        downloadLink.textContent = link.filename;
+                        downloadLink.className = 'block text-blue-500 underline mt-2';
+                        fileDiv.appendChild(downloadLink);
+                        outputList.appendChild(fileDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = '';
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert bg-red-500';
+                alertDiv.innerHTML = `<strong class="text-xl">Error:</strong> <span>${error.message}</span>`;
+                alertContainer.appendChild(alertDiv);
+            });
         }
     </script>
 </head>
@@ -19,12 +90,14 @@
             <div class="card-header">Upload XTF Files</div>
             <div class="card-content">
                 <form id="upload-form" enctype="multipart/form-data">
-                    <div class="file-input-wrapper">
-                        <span class="custom-file-input">Dateien auswählen</span>
-                        <input type="file" name="xtfFiles" id="xtfFiles" multiple accept=".xtf">
+                    <div id="file-preview-wrapper">
+                        <div class="file-input-wrapper">
+                            <span class="custom-file-input">Dateien auswählen</span>
+                            <input type="file" name="xtfFiles" id="xtfFiles" multiple accept=".xtf" onchange="handleFileSelect(event)">
+                        </div>
+                        <div id="preview-container"></div>
                     </div>
                     <p id="file-count" class="mt-2">Keine ausgewählt</p>
-                    <div id="preview-container" class="mt-4"></div>
                 </form>
             </div>
         </div>
@@ -69,14 +142,15 @@
         <div class="card">
             <div class="card-header">Ausgabe</div>
             <div class="card-content">
-                <button id="convert-button" class="pixel-button">Convert to IFC</button>
+                <button id="convert-button" class="pixel-button" onclick="handleConversion()">Convert to IFC</button>
                 <div id="alert-container" class="mt-4"></div>
+                <div id="output-list" class="mt-4"></div>
             </div>
         </div>            
 
         <div class="card">
             <div class="card-header">Switch Theme</div>
-            <div class="card-content">
+            <div class="card-content switch-theme-buttons">
                 <button onclick="switchStyle('{{ url_for('static', filename='css/styles1.css') }}')" class="pixel-button">Pixelart</button>
                 <button onclick="switchStyle('{{ url_for('static', filename='css/styles2.css') }}')" class="pixel-button">Dark</button>
                 <button onclick="switchStyle('{{ url_for('static', filename='css/styles3.css') }}')" class="pixel-button">Rainbow</button>
@@ -87,94 +161,5 @@
 
         <div class="footer">2024 Martin Vanek</div>
     </div>
-
-    <script>
-        document.getElementById('xtfFiles').addEventListener('change', function(event) {
-            const files = Array.from(event.target.files);
-            document.getElementById('file-count').textContent = files.length + ' file(s) selected';
-
-            if (files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = 64;
-                        canvas.height = 64;
-                        ctx.imageSmoothingEnabled = false;
-                        ctx.drawImage(img, 0, 0, 64, 64);
-                        const previewContainer = document.getElementById('preview-container');
-                        previewContainer.innerHTML = '<h3 class="text-xl mb-2">Preview:</h3>';
-                        const previewImg = document.createElement('img');
-                        previewImg.src = canvas.toDataURL();
-                        previewImg.alt = 'Pixel art preview';
-                        previewImg.className = 'border-2 border-black';
-                        previewImg.style.imageRendering = 'pixelated';
-                        previewContainer.appendChild(previewImg);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(files[0]);
-            }
-        });
-
-        document.getElementById('convert-button').addEventListener('click', function() {
-            const uploadForm = document.getElementById('upload-form');
-            const configForm = document.getElementById('config-form');
-            const formData = new FormData(uploadForm);
-
-            new FormData(configForm).forEach((value, key) => {
-                if (key === 'einfaerben') {
-                    formData.append(key, document.getElementById(key).checked);
-                } else {
-                    formData.append(key, value);
-                }
-            });
-
-            fetch('/convert', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                const alertContainer = document.getElementById('alert-container');
-                alertContainer.innerHTML = '';
-
-                if (data.errors) {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert bg-red-500';
-                    alertDiv.innerHTML = `<strong class="text-xl">Error:</strong> <span>${data.errors}</span>`;
-                    alertContainer.appendChild(alertDiv);
-                } else {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert';
-                    alertDiv.innerHTML = `<strong class="text-xl">Conversion Complete!</strong> <span>${data.message}</span>`;
-                    alertContainer.appendChild(alertDiv);
-
-                    const downloadList = document.createElement('ul');
-                    downloadList.className = 'mt-2';
-                    data.downloadLinks.forEach(link => {
-                        const listItem = document.createElement('li');
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = link.url;
-                        downloadLink.textContent = link.filename;
-                        downloadLink.className = 'block text-blue-500 underline mt-2';
-                        listItem.appendChild(downloadLink);
-                        downloadList.appendChild(listItem);
-                    });
-                    alertContainer.appendChild(downloadList);
-                }
-            })
-            .catch(error => {
-                const alertContainer = document.getElementById('alert-container');
-                alertContainer.innerHTML = '';
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert bg-red-500';
-                alertDiv.innerHTML = `<strong class="text-xl">Error:</strong> <span>${error.message}</span>`;
-                alertContainer.appendChild(alertDiv);
-            });
-        });
-    </script>
 </body>
 </html>

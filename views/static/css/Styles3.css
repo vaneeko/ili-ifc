@@ -43,6 +43,26 @@ body {
     text-shadow: 3px 3px 0 #FF0000, 6px 6px 0 #FF7F00, 9px 9px 0 #FFFF00, 12px 12px 0 #00FF00, 15px 15px 0 #0000FF, 18px 18px 0 #4B0082, 21px 21px 0 #8B00FF;
 }
 
+.switch-theme-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.switch-theme-buttons .pixel-button {
+    padding: 8px 16px;
+    font-size: 0.8em;  /* Kleinere Schriftgröße */
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    border: none;
+    background-color: #FF0000; /* Red */
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 0 #C2185B, 0 8px 0 #880E4F;
+    position: relative;
+    top: 0;
+}
+
 .pixel-button {
     padding: 15px 30px;
     font-family: 'Press Start 2P', cursive;
