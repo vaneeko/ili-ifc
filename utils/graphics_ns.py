@@ -79,19 +79,39 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, abwa
     properties = {
         "Bezeichnung": ns.get('bezeichnung', ''),
         "Standortname": ns.get('standortname', ''),
-        "Höhe": str(hoehe),
-        "Durchmesser": str(breite),
+        "Höhe": '',
+        "Durchmesser": '',
         "Funktion": ns.get('funktion', ''),
         "Material": ns.get('material', ''),
-        "Sohlenkote": str(z_mitte)
+        "Sohlenkote": ''
     }
 
+    # Fülle Höhe und Durchmesser nur, wenn sie vorhanden und nicht '0' sind
+    if ns.get('dimorg1') and ns.get('dimorg1') != '0':
+        properties["Höhe"] = ns['dimorg1']
+    if ns.get('dimorg2') and ns.get('dimorg2') != '0':
+        properties["Durchmesser"] = ns['dimorg2']
+
+    # Fülle die Sohlenkote nur, wenn sie in den originalen Daten vorhanden und gültig ist
+    if abwasserknoten:
+        kote = abwasserknoten.get('kote')
+        if kote is not None and kote != '' and kote != '0':
+            try:
+                float_kote = float(kote)
+                if float_kote != 0 and float_kote != data.get('default_sohlenkote', 0):
+                    properties["Sohlenkote"] = str(float_kote)
+            except ValueError:
+                pass  # Ungültiger Wert, ignorieren
+
+
+    # Erstelle Property Set
     property_set = ifc_file.create_entity("IfcPropertySet",
         GlobalId=generate_guid(),
         Name="TBAKTZH STRE Schacht",
         HasProperties=[create_property_single_value(ifc_file, key, value) for key, value in properties.items()]
     )
 
+    # Verknüpfe das Property Set mit dem Schacht
     ifc_file.create_entity("IfcRelDefinesByProperties",
         GlobalId=generate_guid(),
         RelatingPropertyDefinition=property_set,
@@ -114,15 +134,38 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, abwa
     fehlende_werte = 0
     farbe = "Blau"
     if einfaerben:
-        if ns.get('dimorg1') == '0' or ns.get('dimorg2') == '0':
+        # Prüfe Dimension1 (Höhe)
+        if ns.get('dimorg1') == '0' or not ns.get('dimorg1'):
             fehlende_werte += 1
-        if not abwasserknoten or float(abwasserknoten.get('kote', 0)) == 0:
+        
+        # Prüfe Dimension2 (Durchmesser)
+        if ns.get('dimorg2') == '0' or not ns.get('dimorg2'):
+            fehlende_werte += 1
+        
+        # Prüfe Sohlenkote
+        if abwasserknoten:
+            kote = abwasserknoten.get('kote')
+            if kote is None or kote == '' or kote == '0':
+                fehlende_werte += 1
+            else:
+                try:
+                    float_kote = float(kote)
+                    if float_kote == 0 or float_kote == data.get('default_sohlenkote', 0):
+                        fehlende_werte += 1
+                except ValueError:
+                    fehlende_werte += 1
+        else:
+            # Wenn kein Abwasserknoten vorhanden ist
             fehlende_werte += 1
 
-        farbe = "Grün"
-        if fehlende_werte == 1:
+        # Bestimme die Farbe basierend auf fehlenden Werten
+        if fehlende_werte == 0:
+            farbe = "Grün"
+        elif fehlende_werte == 1:
             farbe = "Orange"
-        elif fehlende_werte >= 2:
+        else:  # fehlende_werte >= 2
             farbe = "Rot"
+
+    print(f"Fehlende Werte: {fehlende_werte}, Farbe: {farbe}")  # Debugging-Ausgabe
 
     add_color(ifc_file, schacht, farbe, context)
