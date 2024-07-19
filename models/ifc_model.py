@@ -72,7 +72,7 @@ def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group):
     einfaerben = data['einfaerben']
 
     for haltung in haltungen:
-        innendurchmesser = haltung.get('durchmesser', default_durchmesser)
+        innendurchmesser = haltung.get('durchmesser')
         outer_radius = (innendurchmesser / 2) + default_rohrdicke
         inner_radius = innendurchmesser / 2
 
