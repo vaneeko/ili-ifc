@@ -4,7 +4,7 @@ from utils.common import add_color, generate_guid, add_property_set, create_loca
 from utils.graphics_ns import create_ifc_normschacht
 import math
 
-def create_ifc_project_structure(ifc_file):
+def create_ifc_project_structure(ifc_file, min_coordinates):
     logging.info("Erstelle IFC-Projektstruktur.")
     project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
     
@@ -28,9 +28,9 @@ def create_ifc_project_structure(ifc_file):
     map_conversion = ifc_file.create_entity("IfcMapConversion",
         SourceCRS=context,
         TargetCRS=projected_crs,
-        Eastings=2600000.0,  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN
-        Northings=1200000.0,  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN
-        OrthogonalHeight=0.0,
+        Eastings=min_coordinates['x'],
+        Northings=min_coordinates['y'],
+        OrthogonalHeight=min_coordinates['z'],
         XAxisAbscissa=1.0,
         XAxisOrdinate=0.0,
         Scale=1.0
@@ -46,9 +46,9 @@ def create_ifc_project_structure(ifc_file):
     site = ifc_file.create_entity("IfcSite", 
         GlobalId=generate_guid(), 
         Name="Perimeter",
-        RefLatitude=(47, 22, 7),  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN, Standort
-        RefLongitude=(8, 32, 23),  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN, Standort
-        RefElevation=408.0  # BAUSTELLE MUSS NOCH ANGEPASST WERDEN, Höhe über Meeresspiegel
+        RefLatitude=None,
+        RefLongitude=None,
+        RefElevation=min_coordinates['z']
     )
    
     ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=project, RelatedObjects=[site])
@@ -167,7 +167,7 @@ def create_ifc(ifc_file_path, data):
 
     ifc_file = ifcopenshell.file(schema="IFC4X3")
 
-    context, site = create_ifc_project_structure(ifc_file)
+    context, site = create_ifc_project_structure(ifc_file, data['min_coordinates'])
 
     abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
     haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")

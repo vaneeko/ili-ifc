@@ -1,7 +1,12 @@
 import xml.etree.ElementTree as ET
+import math
 import logging
 
 class XTFParser:
+    @staticmethod
+    def round_down_to_nearest_10(value):
+        return math.floor(value / 10) * 10
+    
     def parse(self, xtf_file_path, config):
         try:
             tree = ET.parse(xtf_file_path)
@@ -41,10 +46,11 @@ class XTFParser:
             'nicht_verarbeitete_normschachte': nicht_verarbeitete_normschachte,
         }
 
-        min_x, min_y = self.find_min_coordinates(data)
+        min_x, min_y, min_z = self.find_min_coordinates(data)
         data['min_coordinates'] = {
             'x': min_x,
-            'y': min_y
+            'y': min_y,
+            'z': min_z
         }
 
         data.update(config)
@@ -237,13 +243,22 @@ class XTFParser:
     def find_min_coordinates(self, data):
         min_x = float('inf')
         min_y = float('inf')
+        min_z = float('inf')
         
         for element in data['haltungspunkte'] + data['abwasserknoten'] + data['normschachte']:
             if 'lage' in element:
                 min_x = min(min_x, float(element['lage']['c1']))
                 min_y = min(min_y, float(element['lage']['c2']))
+                if 'z' in element['lage']:
+                    min_z = min(min_z, float(element['lage']['z']))
+                elif 'kote' in element:
+                    min_z = min(min_z, float(element['kote']))
         
-        return min_x, min_y
+        min_x = self.round_down_to_nearest_10(min_x)
+        min_y = self.round_down_to_nearest_10(min_y)
+        min_z = self.round_down_to_nearest_10(min_z)
+        
+        return min_x, min_y, min_z
 
     def parse_haltungen(self, root, namespace, haltungspunkte, default_sohlenkote):
         haltungen = []
