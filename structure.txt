@@ -29,6 +29,8 @@ ili-ifc/
 │
 ├── views/
 │   ├── static/
+│   │   ├── js/
+│   │   │   └── converter.css
 │   │   └── css/
 │   │       ├── styles1.css
 │   │       ├── styles2.css

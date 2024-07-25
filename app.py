@@ -8,12 +8,12 @@ from controllers.conversion_controller import handle_conversion_request, BASE_TE
 from utils.cleanup import cleanup_old_files, remove_pycache
 from utils.common import read_config
 import threading
+from models.xtf_model import XTFParser
 
 app = Flask(__name__, 
             template_folder='views/templates',
             static_folder='views/static')
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ def handle_exit_signal(sig, frame):
     remove_pycache()
     sys.exit(0)
 
-# Register signal handler
 signal.signal(signal.SIGINT, handle_exit_signal)
 signal.signal(signal.SIGTERM, handle_exit_signal)
 
@@ -33,7 +32,6 @@ cleanup_thread.start()
 def index():
     config = read_config()
     return render_template('index.html', config=config)
-    # return render_template('index.html', config=read_config())
 
 @app.route('/convert', methods=['POST'])
 def convert():
@@ -51,11 +49,37 @@ def convert():
     result = handle_conversion_request(config, request.files)
     return jsonify(result)
 
+@app.route('/extract', methods=['POST'])
+def extract_data():
+    if 'xtfFile' not in request.files:
+        return jsonify({'error': 'Keine Datei ausgewählt'}), 400
+    
+    file = request.files['xtfFile']
+    if file.filename == '':
+        return jsonify({'error': 'Keine Datei ausgewählt'}), 400
+    
+    if file and file.filename.endswith('.xtf'):
+        filename = os.path.join(BASE_TEMP_DIR, file.filename)
+        file.save(filename)
+        
+        config_values = read_config()
+        parser = XTFParser()
+        try:
+            data = parser.parse(filename, config_values)
+            return jsonify(data)
+        except Exception as e:
+            logger.error(f"Fehler beim Parsen der XTF-Datei: {str(e)}")
+            return jsonify({'error': 'Fehler beim Parsen der XTF-Datei'}), 500
+        finally:
+            os.remove(filename)
+    
+    return jsonify({'error': 'Ungültiger Dateityp'}), 400
+
 @app.route('/download/<filename>')
 def download_file(filename):
     file_path = os.path.join(BASE_TEMP_DIR, filename)
     logger.info(f'Trying to send file: {file_path}')
-    for i in range(5):  # Check up to 5 times, waiting each time
+    for i in range(5):
         if os.path.exists(file_path):
             logger.info('File exists and will be sent')
             return send_file(file_path, as_attachment=True)
