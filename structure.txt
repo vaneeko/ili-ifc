@@ -3,9 +3,11 @@ ili-ifc/
 ├── api/
 │   └── endpoints.py
 │
+├── config/
+│   └── config.txt
+│
 ├── controllers/
 │   ├── conversion_controller.py
-│   ├── config.txt
 │   └── xtf_to_ifc.py
 │
 ├── models/
@@ -18,7 +20,6 @@ ili-ifc/
 ├── img/
 │   ├── conv.png
 │   └── GUI_XTFtoIFC.png
-│
 │
 ├── utils/
 │   ├── graphics_ns.py
