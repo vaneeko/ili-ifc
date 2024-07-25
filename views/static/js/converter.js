@@ -21,18 +21,22 @@ document.addEventListener('DOMContentLoaded', function() {
             fileInfo.textContent = `${files.length} Datei(en) ausgewählt`;
             previewContainer.innerHTML = '';
             
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            Array.from(files).forEach(file => {
                 const fileElement = document.createElement('div');
                 fileElement.textContent = file.name;
                 previewContainer.appendChild(fileElement);
-            }
+            });
+
             displayExtractedData(files[0]);
         } else {
-            fileInfo.textContent = 'Keine Dateien ausgewählt';
-            previewContainer.innerHTML = '';
-            extractedDataContainer.innerHTML = '';
+            resetFileInfo();
         }
+    }
+
+    function resetFileInfo() {
+        fileInfo.textContent = 'Keine Dateien ausgewählt';
+        previewContainer.innerHTML = '';
+        extractedDataContainer.innerHTML = '';
     }
 
     function convertFiles() {
@@ -44,23 +48,30 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        for (let i = 0; i < files.length; i++) {
-            formData.append('xtfFiles', files[i]);
-        }
+        Array.from(files).forEach(file => {
+            formData.append('xtfFiles', file);
+        });
 
-        formData.append('default_sohlenkote', document.getElementById('default_sohlenkote').value);
-        formData.append('default_durchmesser', document.getElementById('default_durchmesser').value);
-        formData.append('default_hoehe', document.getElementById('default_hoehe').value);
-        formData.append('default_wanddicke', document.getElementById('default_wanddicke').value);
-        formData.append('default_bodendicke', document.getElementById('default_bodendicke').value);
-        formData.append('default_rohrdicke', document.getElementById('default_rohrdicke').value);
+        const configInputs = ['default_sohlenkote', 'default_durchmesser', 'default_hoehe', 'default_wanddicke', 'default_bodendicke', 'default_rohrdicke'];
+        configInputs.forEach(input => {
+            formData.append(input, document.getElementById(input).value);
+        });
+
         formData.append('einfaerben', document.getElementById('einfaerben').checked);
+
+        convertBtn.disabled = true;
+        convertBtn.textContent = 'Converting...';
 
         fetch('/convert', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.error) {
                 showAlert(data.error, 'error');
@@ -72,18 +83,23 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             showAlert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', 'error');
+        })
+        .finally(() => {
+            convertBtn.disabled = false;
+            convertBtn.textContent = 'Convert to IFC';
         });
     }
 
     function showAlert(message, type) {
-        alertContainer.innerHTML = `<div class="alert ${type === 'error' ? 'alert-error' : ''}">${message}</div>`;
+        alertContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        alertContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
     function displayDownloadLinks(links) {
         outputList.innerHTML = '';
         links.forEach(link => {
             const linkElement = document.createElement('div');
-            linkElement.innerHTML = `<a href="${link.url}" class="download-link">${link.filename}</a>`;
+            linkElement.innerHTML = `<a href="${link.url}" class="download-link" download>${link.filename}</a>`;
             outputList.appendChild(linkElement);
         });
     }
@@ -92,19 +108,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('xtfFile', file);
         
-        formData.append('default_sohlenkote', document.getElementById('default_sohlenkote').value);
-        formData.append('default_durchmesser', document.getElementById('default_durchmesser').value);
-        formData.append('default_hoehe', document.getElementById('default_hoehe').value);
-        formData.append('default_wanddicke', document.getElementById('default_wanddicke').value);
-        formData.append('default_bodendicke', document.getElementById('default_bodendicke').value);
-        formData.append('default_rohrdicke', document.getElementById('default_rohrdicke').value);
+        const configInputs = ['default_sohlenkote', 'default_durchmesser', 'default_hoehe', 'default_wanddicke', 'default_bodendicke', 'default_rohrdicke'];
+        configInputs.forEach(input => {
+            formData.append(input, document.getElementById(input).value);
+        });
+
         formData.append('einfaerben', document.getElementById('einfaerben').checked);
 
         fetch('/extract', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             extractedDataContainer.innerHTML = '';
             if (Object.keys(data).length === 0) {
@@ -136,32 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
         body.className = 'accordion-body';
         body.style.display = 'none';
         
-        const table = document.createElement('table');
-        table.className = 'data-table';
-        
-        if (data.length > 0) {
-            const headerRow = table.insertRow();
-            for (const key of Object.keys(data[0])) {
-                const th = document.createElement('th');
-                th.textContent = key;
-                headerRow.appendChild(th);
-            }
-            
-            data.forEach(item => {
-                const row = table.insertRow();
-                for (const [key, value] of Object.entries(item)) {
-                    const cell = row.insertCell();
-                    cell.textContent = JSON.stringify(value);
-                    
-                    // Prüfen auf Default-Werte
-                    if (isDefaultValue(key, value)) {
-                        cell.classList.add('default-value');
-                    }
-                }
-            });
-        }
-        
+        const table = createDataTable(data);
         body.appendChild(table);
+        
         accordion.appendChild(header);
         accordion.appendChild(body);
         
@@ -172,12 +169,39 @@ document.addEventListener('DOMContentLoaded', function() {
         return accordion;
     }
 
+    function createDataTable(data) {
+        const table = document.createElement('table');
+        table.className = 'data-table';
+        
+        if (data.length > 0) {
+            const headerRow = table.insertRow();
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            
+            data.forEach(item => {
+                const row = table.insertRow();
+                Object.entries(item).forEach(([key, value]) => {
+                    const cell = row.insertCell();
+                    cell.textContent = JSON.stringify(value);
+                    
+                    if (isDefaultValue(key, value)) {
+                        cell.classList.add('default-value');
+                    }
+                });
+            });
+        }
+        
+        return table;
+    }
+
     function isDefaultValue(key, value) {
         const defaultValues = {
             'dimension1': '800.0',
             'dimension2': '800.0',
             'kote': document.getElementById('default_sohlenkote').value,
-            // Fügen Sie hier weitere Default-Werte hinzu
         };
     
         return defaultValues[key] && value == defaultValues[key];

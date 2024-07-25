@@ -9,68 +9,62 @@
 <body>
     <div class="container">
         <h1 id="xtf-to-ifc-converter" class="text-shadow">XTF to IFC Converter</h1>
-        
+
         <div class="content-wrapper">
             <div class="left-column">
-                <div class="card">
-                    <div class="card-header">Upload XTF Files</div>
+                <section class="card">
+                    <h2 class="card-header">Upload XTF Files</h2>
                     <div class="card-content">
                         <div id="file-preview-wrapper">
                             <div class="file-input-wrapper">
-                                <input type="file" id="xtfFiles" name="xtfFiles" multiple accept=".xtf" class="custom-file-input">
-                                <label for="xtfFiles" class="pixel-button">Dateien auswählen</label>
+                                <input type="file" id="xtfFiles" multiple accept=".xtf">
+                                <button class="custom-file-input">Dateien auswählen</button>
                             </div>
                         </div>
                         <div id="preview-container"></div>
-                        <div id="file-info">Keine Dateien ausgewählt</div>
+                        <p id="file-info">Keine Dateien ausgewählt</p>
                     </div>
-                </div>
+                </section>
 
-                <div class="card">
-                    <div class="card-header">Configuration</div>
+                <section class="card">
+                    <h2 class="card-header">Configuration</h2>
                     <div class="card-content">
-                        <div>
-                            <label for="default_sohlenkote">Default Sohlenkote</label>
-                            <input type="number" id="default_sohlenkote" name="default_sohlenkote" class="pixel-input" step="0.01" value="{{ config['default_sohlenkote'] }}">
-                        </div>
-                        <div>
-                            <label for="default_durchmesser">Default Durchmesser</label>
-                            <input type="number" id="default_durchmesser" name="default_durchmesser" class="pixel-input" step="0.01" value="{{ config['default_durchmesser'] }}">
-                        </div>
-                        <div>
-                            <label for="default_hoehe">Default Höhe</label>
-                            <input type="number" id="default_hoehe" name="default_hoehe" class="pixel-input" step="0.01" value="{{ config['default_hoehe'] }}">
-                        </div>
-                        <div>
-                            <label for="default_wanddicke">Default Wanddicke</label>
-                            <input type="number" id="default_wanddicke" name="default_wanddicke" class="pixel-input" step="0.01" value="{{ config['default_wanddicke'] }}">
-                        </div>
-                        <div>
-                            <label for="default_bodendicke">Default Bodendicke</label>
-                            <input type="number" id="default_bodendicke" name="default_bodendicke" class="pixel-input" step="0.01" value="{{ config['default_bodendicke'] }}">
-                        </div>
-                        <div>
-                            <label for="default_rohrdicke">Default Rohrdicke</label>
-                            <input type="number" id="default_rohrdicke" name="default_rohrdicke" class="pixel-input" step="0.01" value="{{ config['default_rohrdicke'] }}">
-                        </div>
+                        <label for="default_sohlenkote">Default Sohlenkote</label>
+                        <input type="number" id="default_sohlenkote" class="pixel-input" value="{{ config.default_sohlenkote }}">
+
+                        <label for="default_durchmesser">Default Durchmesser</label>
+                        <input type="number" id="default_durchmesser" class="pixel-input" value="{{ config.default_durchmesser }}">
+
+                        <label for="default_hoehe">Default Höhe</label>
+                        <input type="number" id="default_hoehe" class="pixel-input" value="{{ config.default_hoehe }}">
+
+                        <label for="default_wanddicke">Default Wanddicke</label>
+                        <input type="number" id="default_wanddicke" class="pixel-input" value="{{ config.default_wanddicke }}">
+
+                        <label for="default_bodendicke">Default Bodendicke</label>
+                        <input type="number" id="default_bodendicke" class="pixel-input" value="{{ config.default_bodendicke }}">
+
+                        <label for="default_rohrdicke">Default Rohrdicke</label>
+                        <input type="number" id="default_rohrdicke" class="pixel-input" value="{{ config.default_rohrdicke }}">
+
                         <div class="checkbox-container">
-                            <input type="checkbox" id="einfaerben" name="einfaerben" class="form-checkbox" {% if config['einfaerben'] %}checked{% endif %}>
+                            <input type="checkbox" id="einfaerben" class="form-checkbox">
                             <label for="einfaerben">Datenvollständigkeit farblich visualisieren</label>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="card">
-                    <div class="card-header">Ausgabe</div>
+                <section class="card">
+                    <h2 class="card-header">Ausgabe</h2>
                     <div class="card-content">
                         <button id="convertBtn" class="pixel-button">Convert to IFC</button>
                         <div id="alert-container" class="mt-4"></div>
                         <div id="output-list" class="mt-4"></div>
                     </div>
-                </div>
+                </section>
 
-                <div class="card">
-                    <div class="card-header">Switch Theme</div>
+                <section class="card">
+                    <h2 class="card-header">Switch Theme</h2>
                     <div class="card-content switch-theme-buttons">
                         <button class="pixel-button" data-theme="styles1.css">Pixelart</button>
                         <button class="pixel-button" data-theme="styles2.css">Dark</button>
@@ -78,22 +72,22 @@
                         <button class="pixel-button" data-theme="styles4.css">Modern</button>
                         <button class="pixel-button" data-theme="styles5.css">Modern Dark</button>
                     </div>
-                </div>
+                </section>
             </div>
 
             <div class="right-column">
-                <div class="card extracted-data-card">
-                    <div class="card-header">Extracted Data</div>
+                <section class="card extracted-data-card">
+                    <h2 class="card-header">Extracted Data</h2>
                     <div class="card-content">
                         <div id="extracted-data"></div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>
 
     <footer class="footer">
-        <p>2024 Martin Vanek</p>
+        <p>2024 · Martin Vanek</p>
     </footer>
 
     <script src="/static/js/converter.js"></script>

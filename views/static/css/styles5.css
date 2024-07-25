@@ -70,7 +70,7 @@ h1 {
   background-color: var(--primary-color);
   border: none;
   border-radius: 4px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.1s ease;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
@@ -83,6 +83,7 @@ h1 {
 
 .custom-file-input:active, .pixel-button:active {
   background-color: #004085;
+  transform: translateY(1px);
 }
 
 .text-shadow {
@@ -231,6 +232,32 @@ h1 {
   z-index: 10;
 }
 
+.file-input-wrapper .custom-file-input {
+  display: inline-block;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  margin: var(--spacing-sm) 0;
+}
+
+.file-input-wrapper:hover .custom-file-input {
+  background-color: #0056b3;
+}
+
+.file-input-wrapper:active .custom-file-input {
+  background-color: #004085;
+  transform: translateY(1px);
+}
+
 .accordion {
   margin-bottom: var(--spacing-sm);
   border: 1px solid var(--border-color);
@@ -265,7 +292,7 @@ h1 {
 }
 
 .data-table .default-value {
-  background-color: rgba(255, 165, 0, 0.2); /* Halbtransparentes Orange */
+  background-color: rgba(245, 176, 0, 0.2);
 }
 
 .data-table th {
@@ -288,7 +315,7 @@ h1 {
 }
 
 .extracted-data-card {
-  height: calc(100vh - 200px);
+  height: calc(90vh - 80px);
   overflow-y: auto;
 }
 
@@ -322,7 +349,6 @@ h1 {
   background-color: #777;
 }
 
-/* Für Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: #555 #2c2c2c;
