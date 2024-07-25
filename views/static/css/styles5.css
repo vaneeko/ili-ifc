@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 :root {
-  --bg-color: #16131f;
+  --bg-color: #151515;
   --text-color: #e0e0e0;
   --primary-color: #007BFF;
   --secondary-color: #adadad;
@@ -249,6 +249,7 @@ h1 {
 .accordion-body {
   padding: var(--spacing-sm);
   background-color: var(--input-bg-color);
+  overflow-x: auto;
 }
 
 .data-table {
@@ -260,6 +261,11 @@ h1 {
   border: 1px solid var(--border-color);
   padding: var(--spacing-sm);
   text-align: left;
+  white-space: nowrap;
+}
+
+.data-table .default-value {
+  background-color: rgba(255, 165, 0, 0.2); /* Halbtransparentes Orange */
 }
 
 .data-table th {
@@ -295,4 +301,29 @@ h1 {
     flex: 1 1 100%;
     max-width: 100%;
   }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2c2c2c;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 6px;
+  border: 3px solid #2c2c2c;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
+}
+
+/* Für Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #555 #2c2c2c;
 }
