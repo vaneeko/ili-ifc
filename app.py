@@ -6,7 +6,7 @@ import signal
 import sys
 from controllers.conversion_controller import handle_conversion_request, BASE_TEMP_DIR
 from utils.cleanup import cleanup_old_files, remove_pycache
-from config.default_config import DEFAULT_CONFIG
+from utils.common import read_config
 import threading
 
 app = Flask(__name__, 
@@ -31,18 +31,19 @@ cleanup_thread.start()
 
 @app.route('/')
 def index():
-    return render_template('index.html', config=DEFAULT_CONFIG)
+    return render_template('index.html', config=read_config())
 
 @app.route('/convert', methods=['POST'])
 def convert():
+    config_values = read_config()
     config = {
-        'default_sohlenkote': float(request.form.get('default_sohlenkote', DEFAULT_CONFIG['default_sohlenkote'])),
-        'default_durchmesser': float(request.form.get('default_durchmesser', DEFAULT_CONFIG['default_durchmesser'])),
-        'default_hoehe': float(request.form.get('default_hoehe', DEFAULT_CONFIG['default_hoehe'])),
-        'default_wanddicke': float(request.form.get('default_wanddicke', DEFAULT_CONFIG['default_wanddicke'])),
-        'default_bodendicke': float(request.form.get('default_bodendicke', DEFAULT_CONFIG['default_bodendicke'])),
-        'default_rohrdicke': float(request.form.get('default_rohrdicke', DEFAULT_CONFIG['default_rohrdicke'])),
-        'einfaerben': request.form.get('einfaerben', DEFAULT_CONFIG['einfaerben']) == 'true'
+        'default_sohlenkote': float(request.form.get('default_sohlenkote', config_values['default_sohlenkote'])),
+        'default_durchmesser': float(request.form.get('default_durchmesser', config_values['default_durchmesser'])),
+        'default_hoehe': float(request.form.get('default_hoehe', config_values['default_hoehe'])),
+        'default_wanddicke': float(request.form.get('default_wanddicke', config_values['default_wanddicke'])),
+        'default_bodendicke': float(request.form.get('default_bodendicke', config_values['default_bodendicke'])),
+        'default_rohrdicke': float(request.form.get('default_rohrdicke', config_values['default_rohrdicke'])),
+        'einfaerben': request.form.get('einfaerben', config_values['einfaerben']) == 'true'
     }
     
     result = handle_conversion_request(config, request.files)

@@ -5,32 +5,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import shutil
 from models.xtf_model import XTFParser
 from models.ifc_model import create_ifc
-from config.default_config import DEFAULT_CONFIG
+from utils.common import read_config
 
 def setup_logging():
     logging.basicConfig(level=logging.DEBUG, 
                         format='%(asctime)s - %(levelname)s - %(message)s', 
                         datefmt='%Y-%m-%d %H:%M:%S')
-
-def read_config(config_file='config.txt'):
-    config = DEFAULT_CONFIG.copy()
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(script_dir, config_file)
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as file:
-            for line in file:
-                if '=' in line:
-                    name, value = line.strip().split('=')
-                    name = name.strip()
-                    value = value.strip()
-                    if name in DEFAULT_CONFIG:
-                        # Convert to the same type as in DEFAULT_CONFIG
-                        config[name] = type(DEFAULT_CONFIG[name])(value)
-                    else:
-                        config[name] = value
-    else:
-        logging.warning(f"Config file not found: {config_path}. Using default configuration.")
-    return config
 
 def get_xtf_files(xtf_path):
     if os.path.isdir(xtf_path):
@@ -54,7 +34,7 @@ if __name__ == '__main__':
     setup_logging()
     logging.info("Program start")
     
-    config = read_config('config.txt')
+    config = read_config()
 
     xtf_path = config.get('xtf_files', 'C:\\converter\\xtf\\')
     xtf_files = get_xtf_files(xtf_path)
