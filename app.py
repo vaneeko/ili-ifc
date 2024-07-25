@@ -31,7 +31,9 @@ cleanup_thread.start()
 
 @app.route('/')
 def index():
-    return render_template('index.html', config=read_config())
+    config = read_config()
+    return render_template('index.html', config=config)
+    # return render_template('index.html', config=read_config())
 
 @app.route('/convert', methods=['POST'])
 def convert():

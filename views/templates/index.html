@@ -107,31 +107,31 @@
                 <form id="config-form" class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="default_sohlenkote">Default Sohlenkote</label>
-                        <input type="number" id="default_sohlenkote" name="default_sohlenkote" value="100" min="0" max="1000" step="0.01" class="pixel-input">
+                        <input type="number" id="default_sohlenkote" name="default_sohlenkote" value="{{ config['default_sohlenkote'] }}" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
                         <label for="default_durchmesser">Default Durchmesser</label>
-                        <input type="number" id="default_durchmesser" name="default_durchmesser" value="0.8" min="0" max="1000" step="0.01" class="pixel-input">
+                        <input type="number" id="default_durchmesser" name="default_durchmesser" value="{{ config['default_durchmesser'] }}" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
                         <label for="default_hoehe">Default Höhe</label>
-                        <input type="number" id="default_hoehe" name="default_hoehe" value="0.8" min="0" max="1000" step="0.01" class="pixel-input">
+                        <input type="number" id="default_hoehe" name="default_hoehe" value="{{ config['default_hoehe'] }}" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
                         <label for="default_wanddicke">Default Wanddicke</label>
-                        <input type="number" id="default_wanddicke" name="default_wanddicke" value="0.04" min="0" max="1000" step="0.01" class="pixel-input">
+                        <input type="number" id="default_wanddicke" name="default_wanddicke" value="{{ config['default_wanddicke'] }}" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
                         <label for="default_bodendicke">Default Bodendicke</label>
-                        <input type="number" id="default_bodendicke" name="default_bodendicke" value="0.02" min="0" max="1000" step="0.01" class="pixel-input">
+                        <input type="number" id="default_bodendicke" name="default_bodendicke" value="{{ config['default_bodendicke'] }}" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div>
                         <label for="default_rohrdicke">Default Rohrdicke</label>
-                        <input type="number" id="default_rohrdicke" name="default_rohrdicke" value="0.02" min="0" max="1000" step="0.01" class="pixel-input">
+                        <input type="number" id="default_rohrdicke" name="default_rohrdicke" value="{{ config['default_rohrdicke'] }}" min="0" max="1000" step="0.01" class="pixel-input">
                     </div>
                     <div class="col-span-2 checkbox-container">
                         <label class="flex items-center">
-                            <input type="checkbox" name="einfaerben" id="einfaerben" class="form-checkbox">
+                            <input type="checkbox" name="einfaerben" id="einfaerben" class="form-checkbox" {% if config['einfaerben'] %}checked{% endif %}>
                             <span class="ml-2">Datenvollständigkeit farblich visualisieren</span>
                         </label>
                     </div>
