@@ -1,0 +1,49 @@
+ili-ifc/
+│
+├── api/
+│   └── endpoints.py
+│
+├── controllers/
+│   ├── conversion_controller.py
+│   ├── config.txt
+│   └── xtf_to_ifc.py
+│
+├── models/
+│   ├── xtf_model.py
+│   └── ifc_model.py
+│
+├── config/
+│   └── default_config.py
+│
+├── img/
+│   ├── conv.png
+│   └── GUI_XTFtoIFC.png
+│
+│
+├── utils/
+│   ├── graphics_ns.py
+│   ├── utils.py
+│   ├── common.py
+│   └── __init__.py
+│
+├── views/
+│   ├── static/
+│   │   └── css/
+│   │       ├── styles1.css
+│   │       ├── styles2.css
+│   │       ├── styles3.css
+│   │       ├── styles4.css
+│   │       └── styles5.css
+│   └── templates/
+│       └── index.html
+│
+├── tests/
+│   ├── test_app.py
+│   ├── conftest.py
+│   ├── pytest.ini
+│   ├── testfile_complete.xtf
+│   └── testfile_light.xtf
+│
+├── app.py
+├── requirements.txt
+└── README.md

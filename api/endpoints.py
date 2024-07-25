@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 import os
 from controllers.conversion_controller import handle_conversion_request
-from config.default_config import DEFAULT_CONFIG
+from utils.common import read_config
 
 # Erstellen eines Blueprint für die API
 api = Blueprint('api', __name__)
@@ -13,7 +13,7 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 # Globale Variable für die aktuelle Konfiguration, initialisiert mit den Standardwerten
-current_config = DEFAULT_CONFIG.copy()
+current_config = read_config()
 
 @api.route('/convert', methods=['POST'])
 def convert():
@@ -74,7 +74,7 @@ def reset_config():
     Endpunkt zum Zurücksetzen der Konfiguration auf die Standardwerte.
     """
     global current_config
-    current_config = DEFAULT_CONFIG.copy()
+    current_config = read_config()
     return jsonify(current_config), 200
 
 @api.route('/config/<key>', methods=['GET'])

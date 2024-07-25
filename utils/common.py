@@ -1,6 +1,8 @@
 import ifcopenshell
 import ifcopenshell.util.element
 import uuid
+import configparser
+import os
 
 def generate_guid():
     """Generates a unique GUID."""
@@ -79,3 +81,20 @@ def add_property_set(ifc_file, ifc_object, name, properties=None):
         RelatingPropertyDefinition=property_set,
         RelatedObjects=[ifc_object]
     )
+
+def read_config():
+    config = configparser.ConfigParser()
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.txt')
+    config.read(config_path)
+
+    return {
+        'xtf_files': config.get('Paths', 'xtf_files'),
+        'output_folder': config.get('Paths', 'output_folder'),
+        'default_sohlenkote': config.getfloat('Defaults', 'default_sohlenkote'),
+        'default_durchmesser': config.getfloat('Defaults', 'default_durchmesser'),
+        'default_hoehe': config.getfloat('Defaults', 'default_hoehe'),
+        'default_wanddicke': config.getfloat('Defaults', 'default_wanddicke'),
+        'default_bodendicke': config.getfloat('Defaults', 'default_bodendicke'),
+        'default_rohrdicke': config.getfloat('Defaults', 'default_rohrdicke'),
+        'einfaerben': config.getboolean('Defaults', 'einfaerben')
+    }
