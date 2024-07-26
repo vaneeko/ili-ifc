@@ -7,7 +7,13 @@ import math
 def create_ifc_project_structure(ifc_file, min_coordinates):
     logging.info("Erstelle IFC-Projektstruktur.")
     project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
-    
+
+    if any(coord is None or math.isinf(coord) for coord in min_coordinates.values()):
+        logging.error(f"Ungültige Mindestkoordinaten: {min_coordinates}")
+        raise ValueError("Ungültige Mindestkoordinaten")
+
+    project = ifc_file.create_entity("IfcProject", GlobalId=generate_guid(), Name="Entwässerungsprojekt")
+
     context = ifc_file.create_entity("IfcGeometricRepresentationContext",
         ContextType="Model",
         CoordinateSpaceDimension=3,
@@ -73,19 +79,19 @@ def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group):
 
     for haltung in haltungen:
         innendurchmesser = haltung.get('durchmesser')
-        outer_radius = (innendurchmesser / 2) + default_rohrdicke
-        inner_radius = innendurchmesser / 2
+        outer_radius = (innendurchmesser / 2) + default_rohrdicke if innendurchmesser is not None else default_durchmesser / 2
+        inner_radius = innendurchmesser / 2 if innendurchmesser is not None else default_durchmesser / 2
 
         start_point = haltung['von_haltungspunkt']['lage']
         end_point = haltung['nach_haltungspunkt']['lage']
 
         start_x = float(start_point['c1'])
         start_y = float(start_point['c2'])
-        start_z = float(haltung['von_z']) if haltung['von_z'] != 0.0 else default_sohlenkote
+        start_z = float(haltung.get('von_z', default_sohlenkote))
 
         end_x = float(end_point['c1'])
         end_y = float(end_point['c2'])
-        end_z = float(haltung['nach_z']) if haltung['nach_z'] != 0.0 else default_sohlenkote
+        end_z = float(haltung.get('nach_z', default_sohlenkote))
 
         start_z += inner_radius
         end_z += inner_radius
@@ -165,18 +171,26 @@ def create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group)
 def create_ifc(ifc_file_path, data):
     logging.info("Erstelle IFC-Datei...")
 
-    ifc_file = ifcopenshell.file(schema="IFC4X3")
+    try:
+        ifc_file = ifcopenshell.file(schema="IFC4X3")
 
-    context, site = create_ifc_project_structure(ifc_file, data['min_coordinates'])
+        logging.info("Erstelle IFC-Projektstruktur.")
+        context, site = create_ifc_project_structure(ifc_file, data['min_coordinates'])
 
-    abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
-    haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
+        abwasserknoten_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Abwasserknoten")
+        haltungen_group = ifc_file.create_entity("IfcGroup", GlobalId=generate_guid(), Name="Haltungen")
 
-    create_ifc_haltungen(ifc_file, data, site, context, haltungen_group)
-    create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group)
+        logging.info("Erstelle IFC-Haltungen.")
+        create_ifc_haltungen(ifc_file, data, site, context, haltungen_group)
+        
+        logging.info("Erstelle IFC-Normschächte.")
+        create_ifc_normschachte(ifc_file, data, site, context, abwasserknoten_group)
 
-    ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[abwasserknoten_group])
-    ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[haltungen_group])
+        ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[abwasserknoten_group])
+        ifc_file.create_entity("IfcRelAggregates", GlobalId=generate_guid(), RelatingObject=site, RelatedObjects=[haltungen_group])
 
-    logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")
-    ifc_file.write(ifc_file_path)
+        logging.info(f"Speichern der IFC-Datei unter {ifc_file_path}...")
+        ifc_file.write(ifc_file_path)
+    except Exception as e:
+        logging.error(f"Fehler beim Erstellen der IFC-Datei: {e}", exc_info=True)
+        raise

@@ -1,3 +1,5 @@
+import logging
+import math
 import ifcopenshell
 import ifcopenshell.util.element
 import uuid
@@ -9,9 +11,10 @@ def generate_guid():
     return ifcopenshell.guid.compress(uuid.uuid1().hex)
 
 def create_cartesian_point(ifc_file, coordinates):
-    # Create a Cartesian point entity
+    if any(coord is None or math.isinf(coord) for coord in coordinates):
+        logging.warning(f"Ungültige Koordinaten: {coordinates}")
+        return None
     return ifc_file.create_entity('IfcCartesianPoint', Coordinates=coordinates)
-
 def add_color(ifc_file, ifc_element, farbe, context):
     color_map = {
         "Grün": (0.0, 1.0, 0.0),

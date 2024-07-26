@@ -45,9 +45,16 @@ def convert():
         'default_rohrdicke': float(request.form.get('default_rohrdicke', config_values['default_rohrdicke'])),
         'einfaerben': request.form.get('einfaerben', config_values['einfaerben']) == 'true'
     }
-    
-    result = handle_conversion_request(config, request.files)
-    return jsonify(result)
+
+    try:
+        result = handle_conversion_request(config, request.files)
+        return jsonify(result)
+    except Exception as e:
+        logging.error(f"Fehler bei der Konvertierung: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+        
+    # result = handle_conversion_request(config, request.files)
+    # return jsonify(result)
 
 @app.route('/extract', methods=['POST'])
 def extract_data():

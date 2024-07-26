@@ -5,8 +5,32 @@ import logging
 class XTFParser:
     @staticmethod
     def round_down_to_nearest_10(value):
+        if math.isinf(value):
+            return value
         return math.floor(value / 10) * 10
     
+    def safe_float(self, value):
+        if value is None or value == '':
+            return None
+        try:
+            float_value = float(value)
+            if math.isinf(float_value):
+                logging.warning(f"Unendlicher Wert gefunden: {value}")
+                return None
+            return float_value
+        except ValueError:
+            logging.warning(f"Konvertierung zu Float fehlgeschlagen für Wert: {value}")
+            return None
+
+    def safe_int(self, value):
+        if value is None or value == '':
+            return None
+        try:
+            return int(float(value))
+        except ValueError:
+            logging.warning(f"Konvertierung zu Integer fehlgeschlagen für Wert: {value}")
+            return None
+
     def parse(self, xtf_file_path, config):
         try:
             tree = ET.parse(xtf_file_path)
@@ -26,10 +50,19 @@ class XTFParser:
         einfaerben = config['einfaerben']
 
         try:
+            logging.info("Starte das Parsen von Haltungspunkten")
             haltungspunkte = self.parse_haltungspunkte(root, namespace, default_sohlenkote)
+            
+            logging.info("Starte das Parsen von Abwasserknoten")
             abwasserknoten, haltungspunkt_sohlenkoten = self.parse_abwasserknoten(root, namespace, default_sohlenkote, default_durchmesser, default_hoehe)
+            
+            logging.info("Starte das Parsen von Normschächten")
             normschachte, nicht_verarbeitete_normschachte = self.parse_normschachte(root, namespace, abwasserknoten, haltungspunkte, default_durchmesser, default_hoehe, default_sohlenkote)
+            
+            logging.info("Starte das Parsen von Kanälen")
             kanale, nicht_verarbeitete_kanale = self.parse_kanale(root, namespace)
+            
+            logging.info("Starte das Parsen von Haltungen")
             haltungen, nicht_verarbeitete_haltungen = self.parse_haltungen(root, namespace, haltungspunkte, default_sohlenkote)
         except Exception as e:
             logging.error(f"Fehler beim Parsen der Daten: {e}")
@@ -47,6 +80,10 @@ class XTFParser:
         }
 
         min_x, min_y, min_z = self.find_min_coordinates(data)
+        if any(math.isinf(coord) for coord in (min_x, min_y, min_z)):
+            logging.error(f"Ungültige Mindestkoordinaten gefunden: x={min_x}, y={min_y}, z={min_z}")
+            raise ValueError("Ungültige Mindestkoordinaten")        
+            
         data['min_coordinates'] = {
             'x': min_x,
             'y': min_y,
@@ -63,6 +100,16 @@ class XTFParser:
             return found_element.text
         return ''
 
+    def parse_coordinates(self, element, namespace):
+        c1 = element.find('ili:C1', namespace)
+        c2 = element.find('ili:C2', namespace)
+        if c1 is not None and c2 is not None:
+            return {
+                'c1': self.safe_float(c1.text),
+                'c2': self.safe_float(c2.text)
+            }
+        return None
+
     def parse_abwasserknoten(self, root, namespace, default_sohlenkote, default_durchmesser, default_hoehe):
         logging.info("Starting to parse sewer nodes.")
         abwasserknoten_data = []
@@ -70,44 +117,35 @@ class XTFParser:
 
         knoten_paths = [
             './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Abwasserknoten',
-            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Abwasserknoten'
+            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Abwasserknoten',
+            './/ili:DSS_2015_LV95.Siedlungsentwaesserung.Abwasserknoten'  # Hinzugefügt für DSS_2015
         ]
 
         for path in knoten_paths:
             for abwasserknoten in root.findall(path, namespace):
                 try:
-                    haltungspunkt_ref = abwasserknoten.find('ili:Lage/ili:COORD', namespace)
-                    if haltungspunkt_ref is None:
+                    lage = abwasserknoten.find('ili:Lage/ili:COORD', namespace)
+                    if lage is None:
                         logging.error(f"Fehler: Abwasserknoten {abwasserknoten.get('TID')} hat keine Koordinaten.")
                         continue
 
-                    c1 = haltungspunkt_ref.find('ili:C1', namespace).text
-                    c2 = haltungspunkt_ref.find('ili:C2', namespace).text
+                    coords = self.parse_coordinates(lage, namespace)
+                    if coords is None:
+                        continue
 
-                    c1_transformed = self.transform_coordinate(c1)
-                    c2_transformed = self.transform_coordinate(c2)
-
-                    sohlenkote = default_sohlenkote
                     sohlenkote_element = abwasserknoten.find('ili:Sohlenkote', namespace)
-                    if sohlenkote_element is not None and sohlenkote_element.text is not None:
-                        try:
-                            sohlenkote = float(sohlenkote_element.text)
-                        except ValueError:
-                            logging.warning(f"Warnung: Ungültige Sohlenkote für Abwasserknoten {abwasserknoten.get('TID')}: {sohlenkote_element.text}")
+                    sohlenkote = self.safe_float(sohlenkote_element.text) if sohlenkote_element is not None else default_sohlenkote
 
-                    dimension1 = abwasserknoten.find('ili:Dimension1', namespace)
-                    dimension2 = abwasserknoten.find('ili:Dimension2', namespace)
-                    dimension1 = dimension1.text if dimension1 is not None and dimension1.text != '0' else str(default_durchmesser * 1000)
-                    dimension2 = dimension2.text if dimension2 is not None and dimension2.text != '0' else str(default_hoehe * 1000)
+                    dimension1 = self.safe_float(self.get_element_text(abwasserknoten, 'ili:Dimension1', namespace))
+                    dimension2 = self.safe_float(self.get_element_text(abwasserknoten, 'ili:Dimension2', namespace))
+                    dimension1 = dimension1 if dimension1 is not None and dimension1 != 0 else default_durchmesser * 1000
+                    dimension2 = dimension2 if dimension2 is not None and dimension2 != 0 else default_hoehe * 1000
 
                     haltungspunkt_id = abwasserknoten.get('TID')
 
                     abwasserknoten_data.append({
                         'id': haltungspunkt_id,
-                        'lage': {
-                            'c1': c1_transformed,
-                            'c2': c2_transformed
-                        },
+                        'lage': coords,
                         'dimension1': dimension1,
                         'dimension2': dimension2,
                         'kote': sohlenkote,
@@ -128,7 +166,8 @@ class XTFParser:
 
         schacht_paths = [
             './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Normschacht',
-            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Normschacht'
+            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Normschacht',
+            './/ili:DSS_2015_LV95.Siedlungsentwaesserung.Normschacht'  # Hinzugefügt für DSS_2015
         ]
 
         for path in schacht_paths:
@@ -148,8 +187,8 @@ class XTFParser:
                         'abwasserknoten_id': abwasserknoten['id'],
                         'lage': abwasserknoten['lage'],
                         'kote': abwasserknoten['kote'],
-                        'dimension1': self.get_element_text(ns, 'ili:Dimension1', namespace) if self.get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
-                        'dimension2': self.get_element_text(ns, 'ili:Dimension2', namespace) if self.get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                        'dimension1': self.safe_float(self.get_element_text(ns, 'ili:Dimension1', namespace)) or default_durchmesser * 1000,
+                        'dimension2': self.safe_float(self.get_element_text(ns, 'ili:Dimension2', namespace)) or default_hoehe * 1000,
                         'dimorg1': self.get_element_text(ns, 'ili:Dimension1', namespace),
                         'dimorg2': self.get_element_text(ns, 'ili:Dimension2', namespace),
                         'bezeichnung': self.get_element_text(ns, 'ili:Bezeichnung', namespace),
@@ -160,15 +199,14 @@ class XTFParser:
                 else:
                     lage = ns.find('ili:Lage/ili:COORD', namespace)
                     if lage is not None:
-                        c1 = lage.find('ili:C1', namespace).text
-                        c2 = lage.find('ili:C2', namespace).text
+                        coords = self.parse_coordinates(lage, namespace)
                         normschachte.append({
                             'id': ns.get('TID'),
                             'abwasserknoten_id': None,
-                            'lage': {'c1': c1, 'c2': c2},
+                            'lage': coords,
                             'kote': default_sohlenkote,
-                            'dimension1': self.get_element_text(ns, 'ili:Dimension1', namespace) if self.get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
-                            'dimension2': self.get_element_text(ns, 'ili:Dimension2', namespace) if self.get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                            'dimension1': self.safe_float(self.get_element_text(ns, 'ili:Dimension1', namespace)) or default_durchmesser * 1000,
+                            'dimension2': self.safe_float(self.get_element_text(ns, 'ili:Dimension2', namespace)) or default_hoehe * 1000,
                             'dimorg1': self.get_element_text(ns, 'ili:Dimension1', namespace),
                             'dimorg2': self.get_element_text(ns, 'ili:Dimension2', namespace),
                             'bezeichnung': self.get_element_text(ns, 'ili:Bezeichnung', namespace),
@@ -179,15 +217,15 @@ class XTFParser:
                     else:
                         zugehoerige_haltungspunkte = [hp for hp in haltungspunkte if hp['lage']['c1'] and hp['lage']['c2'] and ns.get('TID') in hp['id']]
                         if len(zugehoerige_haltungspunkte) >= 2:
-                            mittelpunkt_c1 = sum(float(hp['lage']['c1']) for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
-                            mittelpunkt_c2 = sum(float(hp['lage']['c2']) for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
+                            mittelpunkt_c1 = sum(self.safe_float(hp['lage']['c1']) for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
+                            mittelpunkt_c2 = sum(self.safe_float(hp['lage']['c2']) for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
                             normschachte.append({
                                 'id': ns.get('TID'),
                                 'abwasserknoten_id': None,
                                 'lage': {'c1': mittelpunkt_c1, 'c2': mittelpunkt_c2},
                                 'kote': default_sohlenkote,
-                                'dimension1': self.get_element_text(ns, 'ili:Dimension1', namespace) if self.get_element_text(ns, 'ili:Dimension1', namespace) != '0' else str(default_durchmesser * 1000),
-                                'dimension2': self.get_element_text(ns, 'ili:Dimension2', namespace) if self.get_element_text(ns, 'ili:Dimension2', namespace) != '0' else str(default_hoehe * 1000),
+                                'dimension1': self.safe_float(self.get_element_text(ns, 'ili:Dimension1', namespace)) or default_durchmesser * 1000,
+                                'dimension2': self.safe_float(self.get_element_text(ns, 'ili:Dimension2', namespace)) or default_hoehe * 1000,
                                 'dimorg1': self.get_element_text(ns, 'ili:Dimension1', namespace),
                                 'dimorg2': self.get_element_text(ns, 'ili:Dimension2', namespace),
                                 'bezeichnung': self.get_element_text(ns, 'ili:Bezeichnung', namespace),
@@ -196,7 +234,7 @@ class XTFParser:
                                 'material': self.get_element_text(ns, 'ili:Material', namespace)
                             })
                         else:
-                            print(f"Normschacht {ns.get('TID')} hat keine Koordinaten")
+                            logging.warning(f"Normschacht {ns.get('TID')} hat keine Koordinaten")
                             nicht_verarbeitete_normschachte.append(ns.get('TID'))
 
         return normschachte, nicht_verarbeitete_normschachte
@@ -206,35 +244,35 @@ class XTFParser:
 
         haltungspunkt_paths = [
             './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Haltungspunkt',
-            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Haltungspunkt'
+            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Haltungspunkt',
+            './/ili:DSS_2015_LV95.Siedlungsentwaesserung.Haltungspunkt'
         ]
 
         for path in haltungspunkt_paths:
             for element in root.findall(path, namespace):
                 try:
-                    c1 = element.find('ili:Lage/ili:COORD/ili:C1', namespace)
-                    c2 = element.find('ili:Lage/ili:COORD/ili:C2', namespace)
+                    lage = element.find('ili:Lage/ili:COORD', namespace)
                     kote = element.find('ili:Kote', namespace)
 
-                    if c1 is not None and c2 is not None:
-                        c1_text = c1.text if c1.text is not None else "0"
-                        c2_text = c2.text if c2.text is not None else "0"
-                        z_text = float(kote.text) if kote is not None and kote.text is not None else default_sohlenkote
+                    if lage is not None:
+                        coords = self.parse_coordinates(lage, namespace)
+                        if coords:
+                            z_value = self.safe_float(kote.text) if kote is not None else None
+                            if z_value is None:
+                                z_value = default_sohlenkote
+                                logging.warning(f"Fehlende Kote für Haltungspunkt {element.get('TID')}, verwende Standardwert: {default_sohlenkote}")
 
-                        haltungspunkte.append({
-                            'id': element.get('TID'),
-                            'lage': {
-                                'c1': float(c1_text),
-                                'c2': float(c2_text),
-                                'z': z_text
-                            }
-                        })
+                            haltungspunkte.append({
+                                'id': element.get('TID'),
+                                'lage': {
+                                    'c1': coords['c1'],
+                                    'c2': coords['c2'],
+                                    'z': z_value
+                                }
+                            })
                 except AttributeError as e:
-                    print(f"Fehler beim Parsen des Haltungspunkts {element.get('TID')}: {e}")
+                    logging.error(f"Fehler beim Parsen des Haltungspunkts {element.get('TID')}: {e}")
         return haltungspunkte
-
-    def transform_coordinate(self, coordinate):
-        return float(coordinate)
 
     def find_min_coordinates(self, data):
         min_x = float('inf')
@@ -243,12 +281,20 @@ class XTFParser:
         
         for element in data['haltungspunkte'] + data['abwasserknoten'] + data['normschachte']:
             if 'lage' in element:
-                min_x = min(min_x, float(element['lage']['c1']))
-                min_y = min(min_y, float(element['lage']['c2']))
+                c1 = self.safe_float(element['lage'].get('c1'))
+                c2 = self.safe_float(element['lage'].get('c2'))
+                if c1 is not None and not math.isinf(c1):
+                    min_x = min(min_x, c1)
+                if c2 is not None and not math.isinf(c2):
+                    min_y = min(min_y, c2)
                 if 'z' in element['lage']:
-                    min_z = min(min_z, float(element['lage']['z']))
+                    z = self.safe_float(element['lage']['z'])
+                    if z is not None and not math.isinf(z):
+                        min_z = min(min_z, z)
                 elif 'kote' in element:
-                    min_z = min(min_z, float(element['kote']))
+                    kote = self.safe_float(element['kote'])
+                    if kote is not None and not math.isinf(kote):
+                        min_z = min(min_z, kote)
         
         min_x = self.round_down_to_nearest_10(min_x)
         min_y = self.round_down_to_nearest_10(min_y)
@@ -262,41 +308,38 @@ class XTFParser:
 
         haltung_paths = [
             './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Haltung',
-            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Haltung'
+            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Haltung',
+            './/ili:DSS_2015_LV95.Siedlungsentwaesserung.Haltung'  # Hinzugefügt für DSS_2015
         ]
 
         for path in haltung_paths:
             for haltung in root.findall(path, namespace):
                 try:
-                    bezeichnung = haltung.find('ili:Bezeichnung', namespace).text
-                    lichte_hoehe_element = haltung.find('ili:Lichte_Hoehe', namespace)
-                    laenge_effektiv = haltung.find('ili:LaengeEffektiv', namespace)
-                    material = haltung.find('ili:Material', namespace)
+                    bezeichnung = self.get_element_text(haltung, 'ili:Bezeichnung', namespace)
+                    lichte_hoehe = self.safe_float(self.get_element_text(haltung, 'ili:Lichte_Hoehe', namespace))
+                    laenge_effektiv = self.safe_float(self.get_element_text(haltung, 'ili:LaengeEffektiv', namespace))
+                    material = self.get_element_text(haltung, 'ili:Material', namespace)
 
-                    lichte_hoehe = float(lichte_hoehe_element.text) / 1000.0 if lichte_hoehe_element is not None else 0.5
-                    laenge_effektiv = float(laenge_effektiv.text) if laenge_effektiv is not None else 0.0
-                    material = material.text if material is not None else ""
+                    lichte_hoehe = lichte_hoehe / 1000.0 if lichte_hoehe is not None else 0.5
+                    laenge_effektiv = laenge_effektiv if laenge_effektiv is not None else 0.0
 
                     verlauf = []
                     polyline_element = haltung.find('ili:Verlauf/ili:POLYLINE', namespace)
                     if polyline_element is not None:
                         for coord in polyline_element.findall('ili:COORD', namespace):
-                            c1 = coord.find('ili:C1', namespace).text
-                            c2 = coord.find('ili:C2', namespace).text
-                            verlauf.append({
-                                'c1': float(c1),
-                                'c2': float(c2)
-                            })
+                            coords = self.parse_coordinates(coord, namespace)
+                            if coords:
+                                verlauf.append(coords)
 
-                    von_haltungspunkt_ref = haltung.find('ili:vonHaltungspunktRef', namespace).get('REF')
-                    nach_haltungspunkt_ref = haltung.find('ili:nachHaltungspunktRef', namespace).get('REF')
+                    von_haltungspunkt_ref = haltung.find('ili:vonHaltungspunktRef', namespace)
+                    nach_haltungspunkt_ref = haltung.find('ili:nachHaltungspunktRef', namespace)
 
-                    von_haltungspunkt = next((p for p in haltungspunkte if p['id'] == von_haltungspunkt_ref), None)
-                    nach_haltungspunkt = next((p for p in haltungspunkte if p['id'] == nach_haltungspunkt_ref), None)
+                    von_haltungspunkt = next((p for p in haltungspunkte if p['id'] == von_haltungspunkt_ref.get('REF')), None) if von_haltungspunkt_ref is not None else None
+                    nach_haltungspunkt = next((p for p in haltungspunkte if p['id'] == nach_haltungspunkt_ref.get('REF')), None) if nach_haltungspunkt_ref is not None else None
 
                     if von_haltungspunkt and nach_haltungspunkt:
-                        von_z = von_haltungspunkt['lage']['z']
-                        nach_z = nach_haltungspunkt['lage']['z']
+                        von_z = self.safe_float(von_haltungspunkt['lage'].get('z', default_sohlenkote))
+                        nach_z = self.safe_float(nach_haltungspunkt['lage'].get('z', default_sohlenkote))
 
                         haltungen.append({
                             'id': haltung.get('TID'),
@@ -314,7 +357,7 @@ class XTFParser:
                         nicht_verarbeitete_haltungen.append(haltung.get('TID'))
                 except AttributeError as e:
                     nicht_verarbeitete_haltungen.append(haltung.get('TID'))
-                    print(f"Fehler bei der Verarbeitung der Haltung {haltung.get('TID')}: {e}")
+                    logging.error(f"Fehler bei der Verarbeitung der Haltung {haltung.get('TID')}: {e}")
 
         return haltungen, nicht_verarbeitete_haltungen
 
@@ -325,7 +368,8 @@ class XTFParser:
 
         kanal_paths = [
             './/ili:DSS_2020_LV95.Siedlungsentwaesserung.Kanal',
-            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Kanal'
+            './/ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser.Kanal',
+            './/ili:DSS_2015_LV95.Siedlungsentwaesserung.Kanal'  # Hinzugefügt für DSS_2015
         ]
 
         for path in kanal_paths:
@@ -333,13 +377,14 @@ class XTFParser:
                 try:
                     kanale.append({
                         'id': kanal.get('TID'),
-                        'letzte_aenderung': kanal.find('ili:Letzte_Aenderung', namespace).text if kanal.find('ili:Letzte_Aenderung', namespace) is not None else "Unbekannt",
-                        'standortname': kanal.find('ili:Standortname', namespace).text if kanal.find('ili:Standortname', namespace) is not None else "Unbekannt",
-                        'zugaenglichkeit': kanal.find('ili:Zugaenglichkeit', namespace).text if kanal.find('ili:Zugaenglichkeit', namespace) is not None else "Unbekannt",
-                        'bezeichnung': kanal.find('ili:Bezeichnung', namespace).text if kanal.find('ili:Bezeichnung', namespace).text is not None else "Unbekannt",
-                        'nutzungsart_ist': kanal.find('ili:Nutzungsart_Ist', namespace).text if kanal.find('ili:Nutzungsart_Ist', namespace) is not None else "Unbekannt"
+                        'letzte_aenderung': self.get_element_text(kanal, 'ili:Letzte_Aenderung', namespace) or "Unbekannt",
+                        'standortname': self.get_element_text(kanal, 'ili:Standortname', namespace) or "Unbekannt",
+                        'zugaenglichkeit': self.get_element_text(kanal, 'ili:Zugaenglichkeit', namespace) or "Unbekannt",
+                        'bezeichnung': self.get_element_text(kanal, 'ili:Bezeichnung', namespace) or "Unbekannt",
+                        'nutzungsart_ist': self.get_element_text(kanal, 'ili:Nutzungsart_Ist', namespace) or "Unbekannt"
                     })
                 except AttributeError as e:
                     nicht_verarbeitete_kanale.append(kanal.get('TID'))
+                    logging.error(f"Fehler bei der Verarbeitung des Kanals {kanal.get('TID')}: {e}")
 
         return kanale, nicht_verarbeitete_kanale
