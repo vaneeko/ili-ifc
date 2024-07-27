@@ -136,18 +136,11 @@ class XTFParser:
                     sohlenkote_element = abwasserknoten.find('ili:Sohlenkote', namespace)
                     sohlenkote = self.safe_float(sohlenkote_element.text) if sohlenkote_element is not None else default_sohlenkote
 
-                    dimension1 = self.safe_float(self.get_element_text(abwasserknoten, 'ili:Dimension1', namespace))
-                    dimension2 = self.safe_float(self.get_element_text(abwasserknoten, 'ili:Dimension2', namespace))
-                    dimension1 = dimension1 if dimension1 is not None and dimension1 != 0 else default_durchmesser * 1000
-                    dimension2 = dimension2 if dimension2 is not None and dimension2 != 0 else default_hoehe * 1000
-
                     haltungspunkt_id = abwasserknoten.get('TID')
 
                     abwasserknoten_data.append({
                         'id': haltungspunkt_id,
                         'lage': coords,
-                        'dimension1': dimension1,
-                        'dimension2': dimension2,
                         'kote': sohlenkote,
                         'ref': abwasserknoten.find('ili:AbwasserbauwerkRef', namespace).get('REF') if abwasserknoten.find('ili:AbwasserbauwerkRef', namespace) is not None else None
                     })
