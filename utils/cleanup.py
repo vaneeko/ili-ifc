@@ -2,11 +2,9 @@ import os
 import time
 import shutil
 import logging
+from controllers.conversion_controller import BASE_TEMP_DIR, FILE_LIFETIME, list_directory
 
 logger = logging.getLogger(__name__)
-
-BASE_TEMP_DIR = '/tmp/ifc_converter_temp'
-FILE_LIFETIME = 600  # 10 minutes
 
 def cleanup_old_files():
     while True:
@@ -23,10 +21,3 @@ def remove_pycache():
             if dir_name == '__pycache__':
                 shutil.rmtree(os.path.join(root, dir_name), ignore_errors=True)
                 logger.info(f"Removed __pycache__ directory: {os.path.join(root, dir_name)}")
-
-def list_directory(path):
-    try:
-        files = os.listdir(path)
-        logger.info(f"Contents of {path}: {files}")
-    except FileNotFoundError:
-        logger.error(f"Directory not found: {path}")
