@@ -52,9 +52,6 @@ def convert():
     except Exception as e:
         logging.error(f"Fehler bei der Konvertierung: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
-        
-    # result = handle_conversion_request(config, request.files)
-    # return jsonify(result)
 
 @app.route('/extract', methods=['POST'])
 def extract_data():

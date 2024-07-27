@@ -1,27 +1,33 @@
 import os
+import tempfile
 import logging
 from werkzeug.utils import secure_filename
 from models.xtf_model import XTFParser
 from models.ifc_model import create_ifc
 import time
-from utils.cleanup import list_directory
 
 logger = logging.getLogger(__name__)
 
+# Gemeinsam genutzte Variablen
+BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'ifc_converter_temp')
 ALLOWED_EXTENSIONS = {'xtf'}
-BASE_TEMP_DIR = '/tmp/ifc_converter_temp'
+FILE_LIFETIME = 600  # 10 minutes
+
+# Stellen Sie sicher, dass das Verzeichnis existiert
+if not os.path.exists(BASE_TEMP_DIR):
+    os.makedirs(BASE_TEMP_DIR)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def ensure_temp_dir():
-    if not os.path.exists(BASE_TEMP_DIR):
-        os.makedirs(BASE_TEMP_DIR)
-    logger.info(f"Ensured temporary directory: {BASE_TEMP_DIR}")
+def list_directory(path):
+    try:
+        files = os.listdir(path)
+        logger.info(f"Contents of {path}: {files}")
+    except FileNotFoundError:
+        logger.error(f"Directory not found: {path}")
 
 def handle_conversion_request(config, files):
-    ensure_temp_dir()
-    
     if 'xtfFiles' not in files:
         return {'error': 'Keine Dateien ausgewählt'}, 400
     
