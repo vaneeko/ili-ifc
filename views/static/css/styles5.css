@@ -259,7 +259,7 @@ h1 {
 }
 
 .accordion {
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 10px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   overflow: hidden;
@@ -268,15 +268,29 @@ h1 {
 .accordion-header {
   background-color: #333;
   color: #fff;
-  padding: var(--spacing-sm);
+  padding: 10px;
   cursor: pointer;
   font-weight: bold;
 }
 
 .accordion-body {
-  padding: var(--spacing-sm);
-  background-color: var(--input-bg-color);
-  overflow-x: auto;
+  visibility: hidden;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: visibility 0s linear 0.3s, opacity 0.3s linear, height 0.3s ease-out;
+  background-color: var(--card-bg-color);
+}
+
+.accordion-body.open {
+  visibility: visible;
+  opacity: 1;
+  height: auto;
+  transition-delay: 0s;
+}
+
+.accordion-content {
+  padding: 10px;
 }
 
 .data-table {
@@ -286,17 +300,12 @@ h1 {
 
 .data-table th, .data-table td {
   border: 1px solid var(--border-color);
-  padding: var(--spacing-sm);
+  padding: 8px;
   text-align: left;
-  white-space: nowrap;
-}
-
-.data-table .default-value {
-  background-color: rgba(245, 176, 0, 0.2);
 }
 
 .data-table th {
-  background-color: #333;
+  background-color: #444;
   color: #fff;
 }
 

@@ -1,4 +1,5 @@
 import logging
+import json
 from flask import Flask, render_template, request, jsonify, send_file
 import os
 import time
@@ -58,26 +59,34 @@ def extract_data():
     if 'xtfFile' not in request.files:
         return jsonify({'error': 'Keine Datei ausgewählt'}), 400
     
-    file = request.files['xtfFile']
-    if file.filename == '':
+    files = request.files.getlist('xtfFile')
+    if not files:
         return jsonify({'error': 'Keine Datei ausgewählt'}), 400
     
-    if file and file.filename.endswith('.xtf'):
-        filename = os.path.join(BASE_TEMP_DIR, file.filename)
-        file.save(filename)
-        
-        config_values = read_config()
-        parser = XTFParser()
-        try:
-            data = parser.parse(filename, config_values)
-            return jsonify(data)
-        except Exception as e:
-            logger.error(f"Fehler beim Parsen der XTF-Datei: {str(e)}")
-            return jsonify({'error': 'Fehler beim Parsen der XTF-Datei'}), 500
-        finally:
-            os.remove(filename)
-    
-    return jsonify({'error': 'Ungültiger Dateityp'}), 400
+    config_values = read_config()
+    parser = XTFParser()
+    all_data = {'models': {}}
+
+    try:
+        for file in files:
+            logging.info(f"Processing file: {file.filename}")
+            if file and file.filename.endswith('.xtf'):
+                filename = os.path.join(BASE_TEMP_DIR, file.filename)
+                file.save(filename)
+                
+                data = parser.parse(filename, config_values)
+                model_name = data.get('model', 'Unbekanntes Modell')
+                logging.info(f"Extracted model: {model_name}")
+                all_data['models'][model_name] = data
+
+                os.remove(filename)
+
+        logging.info(f"All extracted models: {list(all_data['models'].keys())}")
+        logging.info(f"Extracted data: {json.dumps(all_data, default=str, indent=2)}")
+        return jsonify(all_data)
+    except Exception as e:
+        logger.error(f"Fehler beim Parsen der XTF-Datei(en): {str(e)}", exc_info=True)
+        return jsonify({'error': f'Fehler beim Parsen der XTF-Datei(en): {str(e)}'}), 500
 
 @app.route('/download/<filename>')
 def download_file(filename):

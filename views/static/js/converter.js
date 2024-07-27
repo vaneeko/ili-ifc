@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded and parsed");
     const fileInput = document.getElementById('xtfFiles');
     const fileInfo = document.getElementById('file-info');
     const previewContainer = document.getElementById('preview-container');
@@ -6,6 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertContainer = document.getElementById('alert-container');
     const outputList = document.getElementById('output-list');
     const extractedDataContainer = document.getElementById('extracted-data');
+
+    console.log("File input element:", fileInput);
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelection);
+        console.log("File selection event listener added");
+    } else {
+        console.error("File input element not found");
+    }
 
     fileInput.addEventListener('change', handleFileSelection);
     convertBtn.addEventListener('click', convertFiles);
@@ -16,8 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function handleFileSelection(e) {
+        console.log("File selection event triggered");
         const files = e.target.files;
         if (files.length > 0) {
+            console.log(`${files.length} file(s) selected`);
             fileInfo.textContent = `${files.length} Datei(en) ausgewählt`;
             previewContainer.innerHTML = '';
             
@@ -26,11 +38,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 fileElement.textContent = file.name;
                 previewContainer.appendChild(fileElement);
             });
-
-            displayExtractedData(files[0]);
+    
+            console.log("Calling extractData function with all selected files");
+            extractData(files);
         } else {
+            console.log("No files selected");
             resetFileInfo();
         }
+    }
+    
+    function extractData(files) {
+        console.log(`Extracting data from ${files.length} file(s)`);
+        const formData = new FormData();
+        
+        Array.from(files).forEach(file => {
+            formData.append('xtfFile', file);
+        });
+        
+        const configInputs = ['default_sohlenkote', 'default_durchmesser', 'default_hoehe', 'default_wanddicke', 'default_bodendicke', 'default_rohrdicke'];
+        configInputs.forEach(input => {
+            formData.append(input, document.getElementById(input).value);
+        });
+    
+        formData.append('einfaerben', document.getElementById('einfaerben').checked);
+    
+        fetch('/extract', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Data received from server:", data);
+            displayExtractedData(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            extractedDataContainer.innerHTML = '<p>Fehler beim Extrahieren der Daten.</p>';
+        });
     }
 
     function resetFileInfo() {
@@ -104,66 +153,132 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function displayExtractedData(file) {
-        const formData = new FormData();
-        formData.append('xtfFile', file);
-        
-        const configInputs = ['default_sohlenkote', 'default_durchmesser', 'default_hoehe', 'default_wanddicke', 'default_bodendicke', 'default_rohrdicke'];
-        configInputs.forEach(input => {
-            formData.append(input, document.getElementById(input).value);
-        });
-
-        formData.append('einfaerben', document.getElementById('einfaerben').checked);
-
-        fetch('/extract', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            extractedDataContainer.innerHTML = '';
-            if (Object.keys(data).length === 0) {
-                extractedDataContainer.innerHTML = '<p>Keine Daten extrahiert.</p>';
-            } else {
-                for (const [key, value] of Object.entries(data)) {
-                    if (Array.isArray(value) && value.length > 0) {
-                        const accordion = createAccordion(key, value);
-                        extractedDataContainer.appendChild(accordion);
-                    }
+    function displayExtractedData(data) {
+        console.log("Raw data received:", data);
+        extractedDataContainer.innerHTML = '';
+    
+        if (!data || Object.keys(data).length === 0) {
+            console.log("No data received or empty data object");
+            extractedDataContainer.innerHTML = '<p>Keine Daten extrahiert.</p>';
+            return;
+        }
+    
+        if (data.models && typeof data.models === 'object') {
+            console.log("Multiple models detected");
+            const modelCount = Object.keys(data.models).length;
+            console.log(`Number of models: ${modelCount}`);
+            for (const [modelName, modelData] of Object.entries(data.models)) {
+                console.log(`Processing model: ${modelName}`);
+                const modelAccordion = createModelAccordion(modelName, modelData);
+                if (modelAccordion) {
+                    extractedDataContainer.appendChild(modelAccordion);
                 }
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            extractedDataContainer.innerHTML = '<p>Fehler beim Extrahieren der Daten.</p>';
+        } else if (data.model) {
+            console.log("Single model detected");
+            const modelAccordion = createModelAccordion(data.model, data);
+            if (modelAccordion) {
+                extractedDataContainer.appendChild(modelAccordion);
+            }
+        } else {
+            console.log("Unknown data structure");
+            extractedDataContainer.innerHTML = '<p>Unbekannte Datenstruktur</p>';
+        }
+    }
+    
+    function createModelAccordion(modelName, modelData) {
+        console.log(`Creating accordion for model: ${modelName}`, modelData);
+        
+        const relevantData = {};
+        const dataTypes = [
+            'abwasserknoten',
+            'haltungspunkte',
+            'normschachte',
+            'kanale',
+            'haltungen',
+            'nicht_verarbeitete_normschachte',
+            'nicht_verarbeitete_kanale',
+            'nicht_verarbeitete_haltungen'
+        ];
+    
+        dataTypes.forEach(type => {
+            if (modelData[type] && modelData[type].length > 0) {
+                relevantData[type] = modelData[type];
+            }
         });
+    
+        // Übersetze die Schlüssel ins Deutsche für die Anzeige
+        const germanTranslations = {
+            'abwasserknoten': 'Abwasserknoten',
+            'haltungspunkte': 'Haltungspunkte',
+            'normschachte': 'Normschächte',
+            'kanale': 'Kanäle',
+            'haltungen': 'Haltungen',
+            'nicht_verarbeitete_normschachte': 'Nicht verarbeitete Normschächte',
+            'nicht_verarbeitete_kanale': 'Nicht verarbeitete Kanäle',
+            'nicht_verarbeitete_haltungen': 'Nicht verarbeitete Haltungen'
+        };
+    
+        const displayData = {};
+        Object.entries(relevantData).forEach(([key, value]) => {
+            displayData[germanTranslations[key] || key] = value;
+        });
+    
+        return createAccordion(modelName, displayData);
     }
 
-    function createAccordion(title, data) {
+    function createAccordion(title, content) {
+        console.log(`Creating accordion for: ${title}`, content);
         const accordion = document.createElement('div');
         accordion.className = 'accordion';
         
         const header = document.createElement('div');
         header.className = 'accordion-header';
-        header.textContent = `${title} (${data.length})`;
+        header.textContent = `${title} (${Array.isArray(content) ? content.length : Object.keys(content).length})`;
         
         const body = document.createElement('div');
         body.className = 'accordion-body';
-        body.style.display = 'none';
         
-        const table = createDataTable(data);
-        body.appendChild(table);
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'accordion-content';
         
+        if (Array.isArray(content)) {
+            if (content.length > 0) {
+                const table = createDataTable(content);
+                contentDiv.appendChild(table);
+            } else {
+                contentDiv.textContent = 'Keine Daten vorhanden';
+            }
+        } else if (typeof content === 'object' && content !== null) {
+            for (const [key, value] of Object.entries(content)) {
+                if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+                    contentDiv.appendChild(createAccordion(key, value));
+                } else {
+                    const p = document.createElement('p');
+                    p.textContent = `${key}: ${value !== undefined ? value : 'Nicht definiert'}`;
+                    contentDiv.appendChild(p);
+                }
+            }
+        } else {
+            const p = document.createElement('p');
+            p.textContent = content !== undefined ? content : 'Nicht definiert';
+            contentDiv.appendChild(p);
+        }
+        
+        body.appendChild(contentDiv);
         accordion.appendChild(header);
         accordion.appendChild(body);
         
         header.addEventListener('click', () => {
-            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+            const isOpen = body.classList.contains('open');
+            body.style.height = isOpen ? '0px' : `${contentDiv.offsetHeight}px`;
+            body.classList.toggle('open');
+            
+            if (!isOpen) {
+                setTimeout(() => {
+                    body.style.height = 'auto';
+                }, 300); // This should match the transition duration
+            }
         });
         
         return accordion;
@@ -185,26 +300,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const row = table.insertRow();
                 Object.entries(item).forEach(([key, value]) => {
                     const cell = row.insertCell();
-                    cell.textContent = JSON.stringify(value);
-                    
-                    if (isDefaultValue(key, value)) {
-                        cell.classList.add('default-value');
+                    if (typeof value === 'object' && value !== null) {
+                        cell.textContent = JSON.stringify(value, null, 2);
+                    } else {
+                        cell.textContent = value !== undefined ? value : 'Nicht definiert';
                     }
                 });
             });
         }
         
         return table;
-    }
-
-    function isDefaultValue(key, value) {
-        const defaultValues = {
-            'dimension1': '800.0',
-            'dimension2': '800.0',
-            'kote': document.getElementById('default_sohlenkote').value,
-        };
-    
-        return defaultValues[key] && value == defaultValues[key];
     }
 
     function switchTheme(themeName) {
