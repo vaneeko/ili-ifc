@@ -289,27 +289,68 @@ document.addEventListener('DOMContentLoaded', function() {
         table.className = 'data-table';
         
         if (data.length > 0) {
-            const headerRow = table.insertRow();
-            Object.keys(data[0]).forEach(key => {
-                const th = document.createElement('th');
-                th.textContent = key;
-                headerRow.appendChild(th);
+            // Sammle alle einzigartigen Schlüssel aus allen Datensätzen
+            const allKeys = new Set();
+            data.forEach(item => {
+                Object.keys(item).forEach(key => allKeys.add(key));
             });
-            
+    
+            // Erstelle die Kopfzeile
+            const headerRow = table.insertRow();
+            allKeys.forEach(key => {
+                if (key !== 'lage') {  // 'lage' separat behandeln
+                    const th = document.createElement('th');
+                    th.textContent = translateHeader(key);
+                    headerRow.appendChild(th);
+                }
+            });
+            // Füge Lage X und Lage Y hinzu, wenn 'lage' vorhanden ist
+            if (allKeys.has('lage')) {
+                const thX = document.createElement('th');
+                thX.textContent = 'Lage X';
+                headerRow.appendChild(thX);
+                const thY = document.createElement('th');
+                thY.textContent = 'Lage Y';
+                headerRow.appendChild(thY);
+            }
+    
+            // Fülle die Tabelle mit Daten
             data.forEach(item => {
                 const row = table.insertRow();
-                Object.entries(item).forEach(([key, value]) => {
-                    const cell = row.insertCell();
-                    if (typeof value === 'object' && value !== null) {
-                        cell.textContent = JSON.stringify(value, null, 2);
-                    } else {
+                allKeys.forEach(key => {
+                    if (key !== 'lage') {
+                        const cell = row.insertCell();
+                        let value = item[key];
+                        if (typeof value === 'number') {
+                            value = value.toFixed(3);
+                        }
                         cell.textContent = value !== undefined ? value : 'Nicht definiert';
                     }
                 });
+                // Behandle 'lage' separat
+                if (allKeys.has('lage')) {
+                    const cellX = row.insertCell();
+                    const cellY = row.insertCell();
+                    cellX.textContent = item.lage && item.lage.c1 !== undefined ? Number(item.lage.c1).toFixed(3) : 'Nicht definiert';
+                    cellY.textContent = item.lage && item.lage.c2 !== undefined ? Number(item.lage.c2).toFixed(3) : 'Nicht definiert';
+                }
             });
         }
         
         return table;
+    }
+    
+    function translateHeader(key) {
+        const translations = {
+            'id': 'TID',
+            'ref': 'REF',
+            'kote': 'Kote',
+            'bezeichnung': 'Bezeichnung',
+            'letzte_aenderung': 'Letzte Änderung',
+            'model': 'Modell'
+            // Fügen Sie hier weitere Übersetzungen hinzu
+        };
+        return translations[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
     }
 
     function switchTheme(themeName) {

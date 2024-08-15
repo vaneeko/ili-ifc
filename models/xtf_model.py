@@ -189,7 +189,9 @@ class XTFParser:
                     'lage': coords,
                     'kote': sohlenkote,
                     'ref': abwasserknoten.find('.//ili:AbwasserbauwerkRef', namespace).get('REF') if abwasserknoten.find('.//ili:AbwasserbauwerkRef', namespace) is not None else None,
-                    'model': model
+                    'model': model,
+                    'bezeichnung': self.get_element_text(abwasserknoten, './/ili:Bezeichnung', namespace) or '',
+                    'letzte_aenderung': self.get_element_text(abwasserknoten, './/ili:Letzte_Aenderung', namespace) or ''
                 })
 
                 haltungspunkt_sohlenkoten[haltungspunkt_id] = sohlenkote
