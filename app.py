@@ -79,7 +79,8 @@ def extract_data():
                 logging.info(f"Extracted model: {model_name}")
                 all_data['models'][model_name] = data
 
-                os.remove(filename)
+                # Temporäre Datei nicht löschen, damit sie für DataTables verfügbar bleibt
+                # os.remove(filename)
 
         logging.info(f"All extracted models: {list(all_data['models'].keys())}")
         logging.info(f"Extracted data: {json.dumps(all_data, default=str, indent=2)}")
@@ -87,6 +88,26 @@ def extract_data():
     except Exception as e:
         logger.error(f"Fehler beim Parsen der XTF-Datei(en): {str(e)}", exc_info=True)
         return jsonify({'error': f'Fehler beim Parsen der XTF-Datei(en): {str(e)}'}), 500
+
+@app.route('/get_datatable_data', methods=['GET'])
+def get_datatable_data():
+    filename = request.args.get('filename')
+    if not filename:
+        return jsonify({'error': 'Kein Dateiname angegeben'}), 400
+
+    file_path = os.path.join(BASE_TEMP_DIR, filename)
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'Datei nicht gefunden'}), 404
+
+    config_values = read_config()
+    parser = XTFParser()
+
+    try:
+        data = parser.parse(file_path, config_values)
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Fehler beim Parsen der Datei {filename}: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Fehler beim Parsen der Datei: {str(e)}'}), 500
 
 @app.route('/download/<filename>')
 def download_file(filename):

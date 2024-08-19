@@ -39,8 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 previewContainer.appendChild(fileElement);
             });
     
-            console.log("Calling extractData function with all selected files");
-            extractData(files);
+            loadDataTables(files);
         } else {
             console.log("No files selected");
             resetFileInfo();
@@ -174,12 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     extractedDataContainer.appendChild(modelAccordion);
                 }
             }
-        } else if (data.model) {
-            console.log("Single model detected");
-            const modelAccordion = createModelAccordion(data.model, data);
-            if (modelAccordion) {
-                extractedDataContainer.appendChild(modelAccordion);
-            }
         } else {
             console.log("Unknown data structure");
             extractedDataContainer.innerHTML = '<p>Unbekannte Datenstruktur</p>';
@@ -188,158 +181,231 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function createModelAccordion(modelName, modelData) {
         console.log(`Creating accordion for model: ${modelName}`, modelData);
-        
-        const relevantData = {};
-        const dataTypes = [
-            'abwasserknoten',
-            'haltungspunkte',
-            'normschachte',
-            'kanale',
-            'haltungen',
-            'nicht_verarbeitete_normschachte',
-            'nicht_verarbeitete_kanale',
-            'nicht_verarbeitete_haltungen'
-        ];
     
-        dataTypes.forEach(type => {
-            if (modelData[type] && modelData[type].length > 0) {
-                relevantData[type] = modelData[type];
-            }
-        });
-    
-        // Übersetze die Schlüssel ins Deutsche für die Anzeige
-        const germanTranslations = {
-            'abwasserknoten': 'Abwasserknoten',
-            'haltungspunkte': 'Haltungspunkte',
-            'normschachte': 'Normschächte',
-            'kanale': 'Kanäle',
-            'haltungen': 'Haltungen',
-            'nicht_verarbeitete_normschachte': 'Nicht verarbeitete Normschächte',
-            'nicht_verarbeitete_kanale': 'Nicht verarbeitete Kanäle',
-            'nicht_verarbeitete_haltungen': 'Nicht verarbeitete Haltungen'
-        };
-    
-        const displayData = {};
-        Object.entries(relevantData).forEach(([key, value]) => {
-            displayData[germanTranslations[key] || key] = value;
-        });
-    
-        return createAccordion(modelName, displayData);
-    }
-
-    function createAccordion(title, content) {
-        console.log(`Creating accordion for: ${title}`, content);
         const accordion = document.createElement('div');
         accordion.className = 'accordion';
-        
+    
         const header = document.createElement('div');
         header.className = 'accordion-header';
-        header.textContent = `${title} (${Array.isArray(content) ? content.length : Object.keys(content).length})`;
-        
+        header.textContent = modelName;
+        accordion.appendChild(header);
+    
         const body = document.createElement('div');
         body.className = 'accordion-body';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'accordion-content';
-        
-        if (Array.isArray(content)) {
-            if (content.length > 0) {
-                const table = createDataTable(content);
-                contentDiv.appendChild(table);
-            } else {
-                contentDiv.textContent = 'Keine Daten vorhanden';
+    
+        for (const [key, value] of Object.entries(modelData)) {
+            if (Array.isArray(value) && value.length > 0) {
+                const subAccordion = createAccordion(key, value);
+                body.appendChild(subAccordion);
             }
-        } else if (typeof content === 'object' && content !== null) {
-            for (const [key, value] of Object.entries(content)) {
-                if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
-                    contentDiv.appendChild(createAccordion(key, value));
-                } else {
-                    const p = document.createElement('p');
-                    p.textContent = `${key}: ${value !== undefined ? value : 'Nicht definiert'}`;
-                    contentDiv.appendChild(p);
-                }
-            }
-        } else {
-            const p = document.createElement('p');
-            p.textContent = content !== undefined ? content : 'Nicht definiert';
-            contentDiv.appendChild(p);
         }
-        
-        body.appendChild(contentDiv);
-        accordion.appendChild(header);
+    
         accordion.appendChild(body);
-        
+    
+        // Event-Listener für das Öffnen/Schließen des Akkordeons
         header.addEventListener('click', () => {
-            const isOpen = body.classList.contains('open');
-            body.style.height = isOpen ? '0px' : `${contentDiv.offsetHeight}px`;
             body.classList.toggle('open');
-            
-            if (!isOpen) {
-                setTimeout(() => {
-                    body.style.height = 'auto';
-                }, 300); // This should match the transition duration
-            }
         });
-        
+    
         return accordion;
     }
 
+    function createAccordion(title, content) {
+        const accordion = document.createElement('div');
+        accordion.className = 'accordion';
+    
+        const header = document.createElement('div');
+        header.className = 'accordion-header';
+        header.textContent = `${title} (${content.length})`;
+        accordion.appendChild(header);
+    
+        const body = document.createElement('div');
+        body.className = 'accordion-body';
+    
+        const table = createDataTable(content);
+        body.appendChild(table);
+    
+        accordion.appendChild(body);
+    
+        header.addEventListener('click', (event) => {
+            event.stopPropagation();
+            body.classList.toggle('open');
+        });
+    
+        return accordion;
+    }
+
+    function loadDataTables(files) {
+        console.log("Files to be sent:", files);
+        if (files.length === 0) {
+            console.error('Keine Dateien ausgewählt');
+            return;
+        }
+    
+        const formData = new FormData();
+        Array.from(files).forEach(file => {
+            console.log("Appending file:", file.name);
+            formData.append('xtfFile', file);
+        });
+    
+        fetch('/extract', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || 'Unbekannter Fehler');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Data received from server:", data);
+            displayExtractedData(data);
+        })
+        .catch(error => {
+            console.error('Error:', error.message);
+            extractedDataContainer.innerHTML = `<p>Fehler beim Extrahieren der Daten: ${error.message}</p>`;
+        });
+    }
+
     function createDataTable(data) {
+        console.log("Creating data table with data:", data);
+    
+        if (!data || data.length === 0) {
+            console.error('Keine Daten für die Tabelle vorhanden');
+            return document.createElement('p');
+        }
+    
+        const tableContainer = document.createElement('div');
         const table = document.createElement('table');
         table.className = 'data-table';
         
-        if (data.length > 0) {
-            // Sammle alle einzigartigen Schlüssel aus allen Datensätzen
-            const allKeys = new Set();
-            data.forEach(item => {
-                Object.keys(item).forEach(key => allKeys.add(key));
-            });
+        // Tabellenkopf erstellen
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        Object.keys(data[0]).forEach(key => {
+            const th = document.createElement('th');
+            th.textContent = translateHeader(key);
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
     
-            // Erstelle die Kopfzeile
-            const headerRow = table.insertRow();
-            allKeys.forEach(key => {
-                if (key !== 'lage') {  // 'lage' separat behandeln
-                    const th = document.createElement('th');
-                    th.textContent = translateHeader(key);
-                    headerRow.appendChild(th);
-                }
-            });
-            // Füge Lage X und Lage Y hinzu, wenn 'lage' vorhanden ist
-            if (allKeys.has('lage')) {
-                const thX = document.createElement('th');
-                thX.textContent = 'Lage X';
-                headerRow.appendChild(thX);
-                const thY = document.createElement('th');
-                thY.textContent = 'Lage Y';
-                headerRow.appendChild(thY);
-            }
+        // Tabellenkörper erstellen
+        const tbody = document.createElement('tbody');
+        data.forEach((item, index) => {
+            const row = document.createElement('tr');
+            Object.entries(item).forEach(([key, value]) => {
+                const td = document.createElement('td');
+                td.className = 'editable-cell';
     
-            // Fülle die Tabelle mit Daten
-            data.forEach(item => {
-                const row = table.insertRow();
-                allKeys.forEach(key => {
-                    if (key !== 'lage') {
-                        const cell = row.insertCell();
-                        let value = item[key];
-                        if (typeof value === 'number') {
-                            value = value.toFixed(3);
+                // Rekursive Funktion zum Auflösen von verschachtelten Objekten
+                function resolveValue(val) {
+                    if (typeof val === 'object' && val !== null) {
+                        if (val.c1 !== undefined && val.c2 !== undefined) {
+                            // Spezieller Fall für Lage-Objekte
+                            return `X: ${val.c1}, Y: ${val.c2}`;
+                        } else {
+                            return Object.entries(val).map(([k, v]) => `${k}: ${resolveValue(v)}`).join(', ');
                         }
-                        cell.textContent = value !== undefined ? value : 'Nicht definiert';
+                    } else {
+                        return val !== undefined ? val : 'N/A';
                     }
-                });
-                // Behandle 'lage' separat
-                if (allKeys.has('lage')) {
-                    const cellX = row.insertCell();
-                    const cellY = row.insertCell();
-                    cellX.textContent = item.lage && item.lage.c1 !== undefined ? Number(item.lage.c1).toFixed(3) : 'Nicht definiert';
-                    cellY.textContent = item.lage && item.lage.c2 !== undefined ? Number(item.lage.c2).toFixed(3) : 'Nicht definiert';
                 }
+    
+                const resolvedValue = resolveValue(value);
+                td.textContent = resolvedValue;
+    
+                td.addEventListener('click', function() {
+                    if (this.querySelector('input')) return;
+    
+                    const input = document.createElement('input');
+                    input.value = this.textContent;
+                    const originalValue = this.textContent;
+    
+                    input.addEventListener('blur', function() {
+                        if (this.value !== originalValue) {
+                            td.textContent = this.value;
+                        } else {
+                            td.textContent = originalValue;
+                        }
+                    });
+    
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            this.blur();
+                        }
+                    });
+    
+                    this.textContent = '';
+                    this.appendChild(input);
+                    input.focus();
+                });
+                row.appendChild(td);
+            });
+            tbody.appendChild(row);
+            
+            if (index === 0) {
+                console.log("First row data:", item);
+            }
+        });
+        table.appendChild(tbody);
+    
+        tableContainer.appendChild(table);
+    
+        // Paginierung
+        const itemsPerPage = 15;
+        const pageCount = Math.ceil(data.length / itemsPerPage);
+        
+        if (pageCount > 1) {
+            const paginationContainer = document.createElement('div');
+            paginationContainer.className = 'pagination';
+            
+            for (let i = 1; i <= pageCount; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.addEventListener('click', () => showPage(i));
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            tableContainer.appendChild(paginationContainer);
+        }
+    
+        function showPage(pageNumber) {
+            const start = (pageNumber - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            Array.from(tbody.children).forEach((row, index) => {
+                row.style.display = (index >= start && index < end) ? '' : 'none';
             });
         }
-        
-        return table;
+    
+        showPage(1);
+    
+        console.log("Table created with rows:", tbody.children.length);
+    
+        return tableContainer;
     }
     
+    function initEditableDataTable(tableId) {
+        $(`#${tableId} td`).on('click', function() {
+            const originalContent = $(this).text();
+            $(this).addClass('being-edited');
+            $(this).html(`<input type="text" value="${originalContent}">`);
+            $(this).find('input').focus();
+    
+            $(this).find('input').on('blur', function() {
+                const newContent = $(this).val();
+                $(this).parent().removeClass('being-edited');
+                $(this).parent().text(newContent);
+                if (newContent !== originalContent) {
+                    $(this).parent().addClass('edited');
+                }
+            });
+        });
+    }
+
     function translateHeader(key) {
         const translations = {
             'id': 'TID',
