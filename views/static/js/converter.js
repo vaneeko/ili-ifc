@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function createDataTable(data) {
+    function createDataTable(data, modelName, dataType) {
         console.log("Creating data table with data:", data);
     
         if (!data || data.length === 0) {
@@ -278,7 +278,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return document.createElement('p');
         }
     
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'table-wrapper';
+        
         const tableContainer = document.createElement('div');
+        tableContainer.className = 'table-container';
+        
         const table = document.createElement('table');
         table.className = 'data-table';
         
@@ -328,6 +333,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     input.addEventListener('blur', function() {
                         if (this.value !== originalValue) {
                             td.textContent = this.value;
+                            // Aktualisieren der Daten im globalen Objekt
+                            if (!currentData.models[modelName]) currentData.models[modelName] = {};
+                            if (!currentData.models[modelName][dataType]) currentData.models[modelName][dataType] = [...data];
+                            currentData.models[modelName][dataType][index][key] = this.value;
                         } else {
                             td.textContent = originalValue;
                         }
@@ -346,46 +355,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.appendChild(td);
             });
             tbody.appendChild(row);
-            
-            if (index === 0) {
-                console.log("First row data:", item);
-            }
         });
         table.appendChild(tbody);
     
         tableContainer.appendChild(table);
-    
-        // Paginierung
-        const itemsPerPage = 15;
-        const pageCount = Math.ceil(data.length / itemsPerPage);
-        
-        if (pageCount > 1) {
-            const paginationContainer = document.createElement('div');
-            paginationContainer.className = 'pagination';
-            
-            for (let i = 1; i <= pageCount; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.addEventListener('click', () => showPage(i));
-                paginationContainer.appendChild(pageButton);
-            }
-            
-            tableContainer.appendChild(paginationContainer);
-        }
-    
-        function showPage(pageNumber) {
-            const start = (pageNumber - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            Array.from(tbody.children).forEach((row, index) => {
-                row.style.display = (index >= start && index < end) ? '' : 'none';
-            });
-        }
-    
-        showPage(1);
+        tableWrapper.appendChild(tableContainer);
     
         console.log("Table created with rows:", tbody.children.length);
     
-        return tableContainer;
+        return tableWrapper;
     }
     
     function initEditableDataTable(tableId) {
@@ -414,7 +392,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'bezeichnung': 'Bezeichnung',
             'letzte_aenderung': 'Letzte Änderung',
             'model': 'Modell'
-            // Fügen Sie hier weitere Übersetzungen hinzu
         };
         return translations[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
     }
