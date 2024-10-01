@@ -4,7 +4,7 @@ import os
 from controllers.conversion_controller import handle_conversion_request
 from utils.common import read_config
 
-# Erstellen eines Blueprint für die API
+# Blueprint API
 api = Blueprint('api', __name__)
 
 # Definieren des Upload-Ordners und Erstellen, falls er nicht existiert
@@ -48,16 +48,10 @@ def convert():
 
 @api.route('/config', methods=['GET'])
 def get_config():
-    """
-    Endpunkt zum Abrufen der aktuellen Konfiguration.
-    """
     return jsonify(current_config)
 
 @api.route('/config', methods=['POST'])
 def update_config():
-    """
-    Endpunkt zum Aktualisieren mehrerer Konfigurationswerte gleichzeitig.
-    """
     global current_config
     for key, value in request.json.items():
         if key in current_config:
@@ -70,27 +64,18 @@ def update_config():
 
 @api.route('/config/reset', methods=['POST'])
 def reset_config():
-    """
-    Endpunkt zum Zurücksetzen der Konfiguration auf die Standardwerte.
-    """
     global current_config
     current_config = read_config()
     return jsonify(current_config), 200
 
 @api.route('/config/<key>', methods=['GET'])
 def get_config_value(key):
-    """
-    Endpunkt zum Abrufen eines spezifischen Konfigurationswerts.
-    """
     if key in current_config:
         return jsonify({key: current_config[key]})
     return jsonify({'error': 'Konfigurationsschlüssel nicht gefunden'}), 404
 
 @api.route('/config/<key>', methods=['PUT'])
 def update_config_value(key):
-    """
-    Endpunkt zum Aktualisieren eines spezifischen Konfigurationswerts.
-    """
     global current_config
     if key in current_config:
         try:
