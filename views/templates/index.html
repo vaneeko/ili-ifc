@@ -9,62 +9,50 @@
 <body>
     <div class="container">
         <h1 id="xtf-to-ifc-converter" class="text-shadow">XTF to IFC Converter</h1>
-
+        
         <div class="content-wrapper">
             <div class="left-column">
-                <section class="card">
-                    <h2 class="card-header">Upload XTF Files</h2>
+                <div class="section card">
+                    <h2 id="upload-xtf-files" class="card-header">Upload XTF Files</h2>
                     <div class="card-content">
                         <div id="file-preview-wrapper">
                             <div class="file-input-wrapper">
-                                <input type="file" id="xtfFiles" multiple accept=".xtf">
+                                <input type="file" id="xtfFiles" name="xtfFiles" multiple accept=".xtf">
                                 <button class="custom-file-input">Dateien auswählen</button>
                             </div>
                         </div>
                         <div id="preview-container"></div>
-                        <p id="file-info">Keine Dateien ausgewählt</p>
+                        <div id="file-info">Keine Dateien ausgewählt</div>
                     </div>
-                </section>
+                </div>
 
-                <section class="card">
-                    <h2 class="card-header">Configuration</h2>
+                <div class="section card">
+                    <h2 id="configuration" class="card-header">Configuration</h2>
                     <div class="card-content">
-                        <label for="default_sohlenkote">Default Sohlenkote</label>
-                        <input type="number" id="default_sohlenkote" class="pixel-input" value="{{ config.default_sohlenkote }}">
-
-                        <label for="default_durchmesser">Default Durchmesser</label>
-                        <input type="number" id="default_durchmesser" class="pixel-input" value="{{ config.default_durchmesser }}">
-
-                        <label for="default_hoehe">Default Höhe</label>
-                        <input type="number" id="default_hoehe" class="pixel-input" value="{{ config.default_hoehe }}">
-
-                        <label for="default_wanddicke">Default Wanddicke</label>
-                        <input type="number" id="default_wanddicke" class="pixel-input" value="{{ config.default_wanddicke }}">
-
-                        <label for="default_bodendicke">Default Bodendicke</label>
-                        <input type="number" id="default_bodendicke" class="pixel-input" value="{{ config.default_bodendicke }}">
-
-                        <label for="default_rohrdicke">Default Rohrdicke</label>
-                        <input type="number" id="default_rohrdicke" class="pixel-input" value="{{ config.default_rohrdicke }}">
-
+                        <input type="number" id="default_sohlenkote" class="pixel-input" placeholder="Default Sohlenkote" value="405.0">
+                        <input type="number" id="default_durchmesser" class="pixel-input" placeholder="Default Durchmesser" value="0.8">
+                        <input type="number" id="default_hoehe" class="pixel-input" placeholder="Default Höhe" value="0.8">
+                        <input type="number" id="default_wanddicke" class="pixel-input" placeholder="Default Wanddicke" value="0.04">
+                        <input type="number" id="default_bodendicke" class="pixel-input" placeholder="Default Bodendicke" value="0.02">
+                        <input type="number" id="default_rohrdicke" class="pixel-input" placeholder="Default Rohrdicke" value="0.02">
                         <div class="checkbox-container">
                             <input type="checkbox" id="einfaerben" class="form-checkbox">
                             <label for="einfaerben">Datenvollständigkeit farblich visualisieren</label>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section class="card">
-                    <h2 class="card-header">Ausgabe</h2>
+                <div class="section card">
+                    <h2 id="ausgabe" class="card-header">Ausgabe</h2>
                     <div class="card-content">
                         <button id="convertBtn" class="pixel-button">Convert to IFC</button>
                         <div id="alert-container" class="mt-4"></div>
                         <div id="output-list" class="mt-4"></div>
                     </div>
-                </section>
+                </div>
 
-                <section class="card">
-                    <h2 class="card-header">Switch Theme</h2>
+                <div class="section card">
+                    <h2 id="switch-theme" class="card-header">Switch Theme</h2>
                     <div class="card-content switch-theme-buttons">
                         <button class="pixel-button" data-theme="styles1.css">Pixelart</button>
                         <button class="pixel-button" data-theme="styles2.css">Dark</button>
@@ -72,16 +60,17 @@
                         <button class="pixel-button" data-theme="styles4.css">Modern</button>
                         <button class="pixel-button" data-theme="styles5.css">Modern Dark</button>
                     </div>
-                </section>
+                </div>
             </div>
 
             <div class="right-column">
-                <section class="card extracted-data-card">
-                    <h2 class="card-header">Extracted Data</h2>
+                <div class="section card extracted-data-card">
+                    <h2 id="extracted-data" class="card-header">Extracted Data</h2>
                     <div class="card-content">
                         <div id="extracted-data"></div>
+                        <div id="data-tables-container"></div>
                     </div>
-                </section>
+                </div>
             </div>
         </div>
     </div>

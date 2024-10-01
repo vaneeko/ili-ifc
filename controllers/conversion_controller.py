@@ -13,7 +13,6 @@ BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'ifc_converter_temp')
 ALLOWED_EXTENSIONS = {'xtf'}
 FILE_LIFETIME = 600  # 10 minutes
 
-# Stellen Sie sicher, dass das Verzeichnis existiert
 if not os.path.exists(BASE_TEMP_DIR):
     os.makedirs(BASE_TEMP_DIR)
 

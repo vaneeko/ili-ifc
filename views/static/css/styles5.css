@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+/* Imports and Variables */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
 
 :root {
   --bg-color: #151515;
@@ -15,11 +16,20 @@
   --error-border-color: #f5c6cb;
   --error-text-color: #f8d7da;
   --footer-color: #888;
+  --hover-color: #3a3a3a;
+  --table-header-bg-color: #333;
+  --table-header-text-color: #fff;
+  --table-row-even-bg-color: #2c2c2c;
+  --table-row-odd-bg-color: #202020;
+  --scrollbar-bg-color: #2c2c2c;
+  --scrollbar-thumb-color: #555;
+  --scrollbar-thumb-hover-color: #777;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 2rem;
 }
 
+/* General Styles */
 body {
   font-size: 1rem;
   background-color: var(--bg-color);
@@ -37,14 +47,19 @@ body {
   box-sizing: border-box;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  color: var(--secondary-color);
+}
+
 h1 {
   font-size: 2.5rem;
   font-weight: 700;
   text-align: left;
-  color: var(--secondary-color);
   margin: var(--spacing-sm) 0 var(--spacing-md);
 }
 
+/* Layout Styles */
 .content-wrapper {
   display: flex;
   gap: var(--spacing-md);
@@ -60,6 +75,7 @@ h1 {
   max-width: 75%;
 }
 
+/* Button Styles */
 .custom-file-input, .pixel-button {
   display: inline-block;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -86,10 +102,12 @@ h1 {
   transform: translateY(1px);
 }
 
+/* Text Styles */
 .text-shadow {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Theme Switch Styles */
 .switch-theme-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -104,6 +122,7 @@ h1 {
   font-size: 0.75rem;
 }
 
+/* Form Input Styles */
 .pixel-input {
   width: 100%;
   padding: var(--spacing-sm);
@@ -116,6 +135,7 @@ h1 {
   color: var(--text-color);
 }
 
+/* Card Styles */
 .card {
   background-color: var(--card-bg-color);
   border: 1px solid var(--border-color);
@@ -132,6 +152,7 @@ h1 {
   margin-bottom: var(--spacing-sm);
 }
 
+/* Checkbox Styles */
 .form-checkbox {
   appearance: none;
   width: 20px;
@@ -166,6 +187,7 @@ h1 {
   margin-bottom: var(--spacing-md);
 }
 
+/* Alert Styles */
 .alert {
   background-color: var(--alert-bg-color);
   border: 1px solid var(--alert-border-color);
@@ -181,6 +203,7 @@ h1 {
   color: var(--error-text-color);
 }
 
+/* Footer Styles */
 .footer {
   font-size: 1rem;
   color: var(--footer-color);
@@ -190,6 +213,7 @@ h1 {
   border-top: 1px solid var(--border-color);
 }
 
+/* File Preview Styles */
 #file-preview-wrapper {
   display: flex;
   align-items: flex-start;
@@ -215,6 +239,7 @@ h1 {
   color: var(--text-color);
 }
 
+/* File Input Wrapper Styles */
 .file-input-wrapper {
   position: relative;
   overflow: hidden;
@@ -232,32 +257,93 @@ h1 {
   z-index: 10;
 }
 
-.file-input-wrapper .custom-file-input {
-  display: inline-block;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-family: 'Roboto', sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: white;
-  background-color: var(--primary-color);
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, transform 0.1s ease;
+/* Table Styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background-color: var(--card-bg-color);
+  color: var(--text-color);
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+}
+
+.data-table th {
+  background-color: var(--table-header-bg-color);
+  color: var(--table-header-text-color);
+  font-weight: bold;
+  text-align: left;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: var(--table-row-even-bg-color);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--hover-color);
+}
+
+.editable-cell {
   cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  margin: var(--spacing-sm) 0;
 }
 
-.file-input-wrapper:hover .custom-file-input {
-  background-color: #0056b3;
+.editable-cell input {
+  background-color: var(--input-bg-color);
+  color: var(--text-color);
+  border: none;
+  width: 100%;
+  padding: 0.25rem;
 }
 
-.file-input-wrapper:active .custom-file-input {
-  background-color: #004085;
-  transform: translateY(1px);
+.editable-cell input {
+  background-color: var(--input-bg-color);
+  color: var(--text-color);
+  border: none;
+  width: 100%;
+  padding: 0.25rem;
+  font-family: inherit;
+  font-size: inherit;
 }
 
+.editable-cell:hover {
+  background-color: var(--hover-color);
+}
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.pagination li {
+  margin: 0 0.25rem;
+}
+
+.pagination button {
+  background-color: var(--card-bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.pagination button:hover {
+  background-color: var(--hover-color);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Accordion Styles */
 .accordion {
   margin-bottom: 10px;
   border: 1px solid var(--border-color);
@@ -266,14 +352,17 @@ h1 {
 }
 
 .accordion-header {
-  background-color: #333;
-  color: #ffffff;
+  background-color: var(--table-header-bg-color);
+  color: var(--table-header-text-color);
   padding: 10px;
   cursor: pointer;
   font-weight: bold;
 }
 
 .accordion-body {
+  color: var(--text-color);
+  font-family: 'Roboto', sans-serif;
+  font-size: 1rem;
   visibility: hidden;
   opacity: 0;
   height: 0;
@@ -293,41 +382,13 @@ h1 {
   padding: 10px;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th, .data-table td {
-  border: 1px solid var(--border-color);
-  padding: 8px;
-  text-align: left;
-}
-
-.data-table th {
-  background-color: #444;
-  color: #fff;
-}
-
-.data-table tr:nth-child(even) {
-  background-color: #2c2c2c;
-}
-
-.download-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  margin-right: var(--spacing-sm);
-}
-
-.download-link:hover {
-  text-decoration: underline;
-}
-
+/* Extracted Data Card Styles */
 .extracted-data-card {
   height: calc(90vh - 80px);
   overflow-y: auto;
 }
 
+/* Responsive Styles */
 @media (max-width: 768px) {
   .content-wrapper {
     flex-direction: column;
@@ -339,26 +400,90 @@ h1 {
   }
 }
 
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #2c2c2c;
+  background: var(--scrollbar-bg-color);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #555;
+  background-color: var(--scrollbar-thumb-color);
   border-radius: 6px;
-  border: 3px solid #2c2c2c;
+  border: 3px solid var(--scrollbar-bg-color);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #777;
+  background-color: var(--scrollbar-thumb-hover-color);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #555 #2c2c2c;
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-bg-color);
+}
+
+
+
+
+
+.table-wrapper {
+  max-height: 500px; /* Adjust this value as needed */
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--border-color);
+  padding: 8px;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: var(--table-header-bg-color);
+  color: var(--table-header-text-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: var(--table-row-even-bg-color);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--hover-color);
+}
+
+/* Ensure that horizontal scrollbar appears at the bottom of the table wrapper */
+.table-wrapper::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg-color);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: 6px;
+  border: 3px solid var(--scrollbar-bg-color);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover-color);
 }

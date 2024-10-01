@@ -104,14 +104,14 @@ def create_ifc_normschacht(ifc_file, ns, abwasserknoten, facility, context, abwa
                 pass  # Ungültiger Wert, ignorieren
 
 
-    # Erstelle Property Set
+    # Property Set
     property_set = ifc_file.create_entity("IfcPropertySet",
         GlobalId=generate_guid(),
         Name="TBAKTZH STRE Schacht",
         HasProperties=[create_property_single_value(ifc_file, key, value) for key, value in properties.items()]
     )
 
-    # Verknüpfe das Property Set mit dem Schacht
+    # Verknüpfung Property Set mit Schacht
     ifc_file.create_entity("IfcRelDefinesByProperties",
         GlobalId=generate_guid(),
         RelatingPropertyDefinition=property_set,

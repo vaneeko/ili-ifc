@@ -41,7 +41,6 @@ class XTFParser:
         root = tree.getroot()
         namespace = {'ili': 'http://www.interlis.ch/INTERLIS2.3'}
 
-        # Extract configuration values
         default_sohlenkote = config['default_sohlenkote']
         default_durchmesser = config['default_durchmesser']
         default_hoehe = config['default_hoehe']
@@ -50,7 +49,6 @@ class XTFParser:
         default_rohrdicke = config['default_rohrdicke']
         einfaerben = config['einfaerben']
 
-        # Identify the model used in the file
         model = self.identify_model(root, namespace)
         logging.info(f"Identified model: {model}")
 
@@ -189,7 +187,9 @@ class XTFParser:
                     'lage': coords,
                     'kote': sohlenkote,
                     'ref': abwasserknoten.find('.//ili:AbwasserbauwerkRef', namespace).get('REF') if abwasserknoten.find('.//ili:AbwasserbauwerkRef', namespace) is not None else None,
-                    'model': model
+                    'model': model,
+                    'bezeichnung': self.get_element_text(abwasserknoten, './/ili:Bezeichnung', namespace) or '',
+                    'letzte_aenderung': self.get_element_text(abwasserknoten, './/ili:Letzte_Aenderung', namespace) or ''
                 })
 
                 haltungspunkt_sohlenkoten[haltungspunkt_id] = sohlenkote
