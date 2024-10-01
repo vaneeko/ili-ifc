@@ -42,7 +42,6 @@ def create_local_placement(ifc_file, point, direction=None, relative_to=None):
     return local_placement
 
 def create_swept_disk_solid(ifc_file, polyline, outer_radius, inner_radius):
-    # Create a swept disk solid entity
     return ifc_file.create_entity('IfcSweptDiskSolid',
         Directrix=polyline,
         Radius=outer_radius,

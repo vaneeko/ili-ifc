@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
         accordion.appendChild(body);
     
-        // Event-Listener für das Öffnen/Schließen des Akkordeons
+        // Event-Listener für das Öffnen/Schliessen des Akkordeons
         header.addEventListener('click', () => {
             body.classList.toggle('open');
         });
