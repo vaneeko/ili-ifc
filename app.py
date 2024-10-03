@@ -15,11 +15,11 @@ app = Flask(__name__,
             template_folder='views/templates',
             static_folder='views/static')
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 def handle_exit_signal(sig, frame):
-    logger.info('Shutting down and cleaning up...')
+    # logger.info('Shutting down and cleaning up...')
     remove_pycache()
     sys.exit(0)
 
