@@ -9,15 +9,12 @@ logger = logging.getLogger()
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    # This hook is used to configure settings before any tests are run
     config.option.tbstyle = 'short'
-    logger.info("Starting test session")
+    # logger.info("Starting test session")
 
 @pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
-    # This hook is called after the whole test run completes
-    # Log the test session finish
-    logger.info("Test session finished")
+    # logger.info("Test session finished")
 
     # Remove the __pycache__ directory
     shutil.rmtree('__pycache__', ignore_errors=True)

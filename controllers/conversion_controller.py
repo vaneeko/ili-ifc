@@ -22,7 +22,7 @@ def allowed_file(filename):
 def list_directory(path):
     try:
         files = os.listdir(path)
-        logger.info(f"Contents of {path}: {files}")
+        # logger.info(f"Contents of {path}: {files}")
     except FileNotFoundError:
         logger.error(f"Directory not found: {path}")
 
@@ -43,7 +43,7 @@ def handle_conversion_request(config, files):
 
             try:
                 file.save(xtf_path)
-                logger.info(f'File saved to {xtf_path}')
+                # logger.info(f'File saved to {xtf_path}')
                 list_directory(BASE_TEMP_DIR)
 
                 parser = XTFParser()
@@ -56,7 +56,7 @@ def handle_conversion_request(config, files):
                 time.sleep(1)  # Wait for a second to ensure file is created
 
                 if os.path.exists(ifc_path):
-                    logger.info(f'IFC file successfully created: {ifc_path}')
+                    # logger.info(f'IFC file successfully created: {ifc_path}')
                     list_directory(BASE_TEMP_DIR)
                     converted_files.append(ifc_filename)
                     

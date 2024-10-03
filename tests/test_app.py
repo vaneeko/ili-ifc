@@ -6,7 +6,7 @@ import logging
 from app import app
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
 @pytest.fixture
@@ -16,19 +16,19 @@ def client():
 
 def test_index(client):
     response = client.get('/')
-    logger.info('GET / request successful')
+    # logger.info('GET / request successful')
     assert response.status_code == 200
     assert b'XTF to IFC Converter' in response.data
-    logger.info('Index page loaded successfully')
+    # logger.info('Index page loaded successfully')
 
 def test_convert_no_files(client):
     response = client.post('/convert', data={})
-    logger.info('POST /convert request with no files')
+    # logger.info('POST /convert request with no files')
     assert response.status_code == 400
     
     response_data = json.loads(response.data)
     assert 'Keine Dateien ausgewählt' in response_data['error']
-    logger.info('No files error message validated')
+    # logger.info('No files error message validated')
 
 def test_convert_success(client):
     data = {
@@ -46,12 +46,12 @@ def test_convert_success(client):
             **data
         })
 
-    logger.info('POST /convert request with valid file')
+    # logger.info('POST /convert request with valid file')
     assert response.status_code == 200
     response_data = json.loads(response.data)
     assert 'Erfolgreich konvertierte Dateien' in response_data['message']
     assert len(response_data['downloadLinks']) > 0
-    logger.info('Conversion success message validated')
+    # logger.info('Conversion success message validated')
 
     for link in response_data['downloadLinks']:
         filename = link['filename']

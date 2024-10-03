@@ -20,4 +20,4 @@ def remove_pycache():
         for dir_name in dirs:
             if dir_name == '__pycache__':
                 shutil.rmtree(os.path.join(root, dir_name), ignore_errors=True)
-                logger.info(f"Removed __pycache__ directory: {os.path.join(root, dir_name)}")
+                # logger.info(f"Removed __pycache__ directory: {os.path.join(root, dir_name)}")
