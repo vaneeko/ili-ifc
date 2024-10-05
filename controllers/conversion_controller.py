@@ -8,7 +8,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-# Gemeinsam genutzte Variablen
+# Shared variables
 BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'ifc_converter_temp')
 ALLOWED_EXTENSIONS = {'xtf'}
 FILE_LIFETIME = 600  # 10 minutes
