@@ -1,2 +1,3 @@
 Flask==3.0.3
-ifcopenshell==0.7.0.240521
+numpy==2.0.2
+ifcopenshell

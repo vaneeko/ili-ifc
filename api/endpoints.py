@@ -7,32 +7,29 @@ from utils.common import read_config
 # Blueprint API
 api = Blueprint('api', __name__)
 
-# Definieren des Upload-Ordners und Erstellen, falls er nicht existiert
+# Define upload folder and create it if it doesn't exist
 UPLOAD_FOLDER = '/tmp/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Globale Variable für die aktuelle Konfiguration, initialisiert mit den Standardwerten
+# Global variable for current configuration, initialized with default values
 current_config = read_config()
 
+# Endpoint for converting XTF files to IFC. Accepts XTF files and optional configuration parameters.
 @api.route('/convert', methods=['POST'])
 def convert():
-    """
-    Endpunkt zum Konvertieren von XTF-Dateien zu IFC.
-    Akzeptiert XTF-Dateien und optionale Konfigurationsparameter.
-    """
     if 'xtfFiles' not in request.files:
         return jsonify({'error': 'Keine Dateien ausgewählt'}), 400
     
     files = request.files.getlist('xtfFiles')
     
-    # Erstellen einer Kopie der aktuellen Konfiguration und Aktualisieren mit Werten aus der Anfrage
+    # Create a copy of the current configuration and update with values from the request
     config = current_config.copy()
     for key in config.keys():
         if key in request.form:
             config[key] = type(config[key])(request.form.get(key))
     
-    # Speichern der hochgeladenen Dateien
+    # Save uploaded files
     saved_files = []
     for file in files:
         if file and file.filename.endswith('.xtf'):
@@ -41,7 +38,7 @@ def convert():
             file.save(file_path)
             saved_files.append(file_path)
     
-    # Durchführen der Konvertierung
+    # Perform conversion
     result = handle_conversion_request(config, saved_files)
     
     return jsonify(result)
@@ -56,7 +53,7 @@ def update_config():
     for key, value in request.json.items():
         if key in current_config:
             try:
-                # Versuche, den Wert in den korrekten Typ zu konvertieren
+                # Try to convert the value to the correct type
                 current_config[key] = type(current_config[key])(value)
             except ValueError:
                 return jsonify({'error': f'Ungültiger Wert für {key}'}), 400
@@ -80,7 +77,7 @@ def update_config_value(key):
     if key in current_config:
         try:
             value = request.json.get('value')
-            # Konvertieren des Werts in den korrekten Typ
+            # Convert the value to the correct type
             current_config[key] = type(current_config[key])(value)
             return jsonify({key: current_config[key]})
         except ValueError:

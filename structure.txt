@@ -48,5 +48,6 @@ ili-ifc/
 │   └── testfile_light.xtf
 │
 ├── app.py
+├── Dockerfile
 ├── requirements.txt
 └── README.md
