@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 :root {
+  /* Colors */
   --bg-color: #282c34;
   --text-color: #ffffff;
   --primary-color: #FF0000;
@@ -24,16 +25,46 @@
   --scrollbar-bg-color: #4B0082;
   --scrollbar-thumb-color: #FFD700;
   --scrollbar-thumb-hover-color: #FFA500;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 2rem;
+
+  /* Font sizes */
+  --font-size-base: 14px;
+  --font-size-large: 1.2em;
+  --font-size-xlarge: 2.5em;
+  --font-size-small: 0.85rem;
+  --font-size-xsmall: 0.75rem;
+
+  /* Spacing */
+  --spacing-xsmall: 0.25rem;
+  --spacing-small: 0.5rem;
+  --spacing-medium: 0.75rem;
+  --spacing-large: 1rem;
+  --spacing-xlarge: 1.5rem;
+  --spacing-xxlarge: 2rem;
+
+  /* Border radius */
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+
+  /* Box shadows */
+  --box-shadow-card: 0 0 0 4px #483D8B, 0 0 0 8px #4169E1, 0 0 0 12px #0000FF;
+  --box-shadow-button: 0 4px 0 #C2185B, 0 8px 0 #880E4F;
+  --box-shadow-alert: 0 0 0 4px #228B22, 0 0 0 8px #008000, 0 0 0 12px #006400;
+
+  /* Dimensions */
+  --checkbox-width: 50px;
+  --checkbox-height: 30px;
+  --table-max-height: 500px;
+  --extracted-data-height: calc(90vh - 80px);
+
+  /* Font families */
+  --font-family-primary: 'Press Start 2P', cursive;
 }
 
 /* General Styles */
 body {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   background-color: var(--bg-color);
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-family-primary);
   color: var(--text-color);
   line-height: 1.6;
   margin: 0;
@@ -43,7 +74,7 @@ body {
 .container {
   max-width: 100%;
   margin: auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xxlarge);
   box-sizing: border-box;
 }
 
@@ -53,16 +84,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1 {
-  font-size: 2.5em;
+  font-size: var(--font-size-xlarge);
   font-weight: 700;
   text-align: left;
-  margin: var(--spacing-sm) 0 var(--spacing-md);
+  margin: var(--spacing-small) 0 var(--spacing-large);
 }
 
 /* Layout Styles */
 .content-wrapper {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-large);
 }
 
 .left-column {
@@ -78,20 +109,20 @@ h1 {
 /* Button Styles */
 .custom-file-input, .pixel-button {
   display: inline-block;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-family: 'Press Start 2P', cursive;
+  padding: var(--spacing-small) var(--spacing-large);
+  font-family: var(--font-family-primary);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: var(--font-size-small);
   color: white;
   background-color: var(--primary-color);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-small);
   transition: all 0.3s ease;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  margin: var(--spacing-sm) 0;
-  box-shadow: 0 4px 0 #C2185B, 0 8px 0 #880E4F;
+  margin: var(--spacing-small) 0;
+  box-shadow: var(--box-shadow-button);
   position: relative;
   top: 0;
 }
@@ -117,25 +148,25 @@ h1 {
 .switch-theme-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small);
   justify-content: flex-start;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 0.85rem;
+  padding: var(--spacing-medium);
+  font-size: var(--font-size-small);
 }
 
 .switch-theme-buttons .pixel-button {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
+  padding: var(--spacing-small) var(--spacing-medium);
+  font-size: var(--font-size-xsmall);
 }
 
 /* Form Input Styles */
 .pixel-input {
   width: 100%;
-  padding: var(--spacing-sm);
-  font-family: 'Press Start 2P', cursive;
+  padding: var(--spacing-small);
+  font-family: var(--font-family-primary);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  margin-bottom: var(--spacing-sm);
+  border-radius: var(--border-radius-small);
+  margin-bottom: var(--spacing-medium);
   box-sizing: border-box;
   background-color: var(--input-bg-color);
   color: #212121;
@@ -145,33 +176,37 @@ h1 {
 .card {
   background-color: var(--card-bg-color);
   border: 4px solid var(--border-color);
-  border-radius: 8px;
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-md);
-  box-shadow: 0 0 0 4px #483D8B, 0 0 0 8px #4169E1, 0 0 0 12px #0000FF;
+  border-radius: var(--border-radius-medium);
+  margin-bottom: var(--spacing-xlarge);
+  padding: var(--spacing-large);
+  box-shadow: var(--box-shadow-card);
 }
 
 .card-header {
-  font-size: 1.2em;
+  font-size: var(--font-size-large);
   font-weight: bold;
   color: #FFD700;
   text-shadow: 2px 2px 0 #FFA500;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-medium);
+}
+
+.card-content {
+  padding: var(--spacing-medium) 0;
 }
 
 /* Checkbox Styles */
 .form-checkbox {
   appearance: none;
-  width: 50px;
-  height: 30px;
+  width: var(--checkbox-width);
+  height: var(--checkbox-height);
   border: 4px solid #FFD700;
-  border-radius: 4px;
+  border-radius: var(--border-radius-small);
   background: var(--input-bg-color);
   cursor: pointer;
   display: inline-block;
   position: relative;
   vertical-align: middle;
-  margin-right: var(--spacing-sm);
+  margin-right: var(--spacing-small);
 }
 
 .form-checkbox:checked {
@@ -191,7 +226,8 @@ h1 {
 .checkbox-container {
   display: flex;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-large);
+  margin-top: var(--spacing-small);
 }
 
 /* Alert Styles */
@@ -199,10 +235,10 @@ h1 {
   background-color: var(--alert-bg-color);
   border: 4px solid var(--alert-border-color);
   color: var(--alert-text-color);
-  padding: var(--spacing-md);
-  border-radius: 4px;
-  margin-top: var(--spacing-md);
-  box-shadow: 0 0 0 4px #228B22, 0 0 0 8px #008000, 0 0 0 12px #006400;
+  padding: var(--spacing-large);
+  border-radius: var(--border-radius-small);
+  margin-top: var(--spacing-large);
+  box-shadow: var(--box-shadow-alert);
 }
 
 .alert-error {
@@ -213,12 +249,12 @@ h1 {
 
 /* Footer Styles */
 .footer {
-  font-size: 12px;
+  font-size: var(--font-size-xsmall);
   color: var(--footer-color);
   text-shadow: 1px 1px 0 #C71585;
   text-align: center;
-  padding: var(--spacing-md) 0;
-  margin-top: var(--spacing-md);
+  padding: var(--spacing-large) 0;
+  margin-top: var(--spacing-large);
   border-top: 1px solid var(--border-color);
 }
 
@@ -234,7 +270,7 @@ h1 {
   flex-direction: column;
   gap: 5px;
   align-items: flex-start;
-  margin-left: var(--spacing-sm);
+  margin-left: var(--spacing-small);
 }
 
 #preview-container div, #output-list div {
@@ -268,9 +304,9 @@ h1 {
 
 /* Table Styles */
 .table-wrapper {
-  max-height: 500px;
+  max-height: var(--table-max-height);
   overflow-y: auto;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-large);
 }
 
 .table-container {
@@ -281,7 +317,7 @@ h1 {
   width: 100%;
   border-collapse: collapse;
   white-space: nowrap;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-large);
   background-color: var(--card-bg-color);
   color: var(--text-color);
 }
@@ -289,7 +325,7 @@ h1 {
 .data-table th,
 .data-table td {
   border: 1px solid var(--border-color);
-  padding: 0.75rem;
+  padding: var(--spacing-medium);
   text-align: left;
 }
 
@@ -323,7 +359,7 @@ h1 {
   color: #212121;
   border: none;
   width: 100%;
-  padding: 0.25rem;
+  padding: var(--spacing-xsmall);
   font-family: inherit;
   font-size: inherit;
 }
@@ -338,20 +374,20 @@ h1 {
   justify-content: center;
   list-style: none;
   padding: 0;
-  margin-top: 1rem;
+  margin-top: var(--spacing-large);
 }
 
 .pagination li {
-  margin: 0 0.25rem;
+  margin: 0 var(--spacing-xsmall);
 }
 
 .pagination button {
   background-color: var(--card-bg-color);
   color: var(--text-color);
   border: 1px solid var(--border-color);
-  padding: 0.5rem 0.75rem;
+  padding: var(--spacing-small) var(--spacing-medium);
   cursor: pointer;
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-family-primary);
 }
 
 .pagination button:hover {
@@ -365,22 +401,22 @@ h1 {
 
 /* Accordion Styles */
 .accordion {
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-small);
   border: 4px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--border-radius-small);
   overflow: hidden;
 }
 
 .accordion-header {
   background-color: #6A5ACD;
   color: #FFD700;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-small);
   cursor: pointer;
   font-weight: bold;
 }
 
 .accordion-body {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-small);
   background-color: var(--card-bg-color);
   overflow-x: auto;
   visibility: hidden;
@@ -398,7 +434,7 @@ h1 {
 
 /* Extracted Data Card Styles */
 .extracted-data-card {
-  height: calc(90vh - 80px);
+  height: var(--extracted-data-height);
   overflow-y: auto;
 }
 
@@ -415,18 +451,9 @@ h1 {
 }
 
 /* Scrollbar Styles */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-bg-color);
-}
-
 ::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb-color);
-  border-radius: 6px;
+  border-radius: var(--border-radius-medium);
   border: 3px solid var(--scrollbar-bg-color);
 }
 
@@ -451,7 +478,7 @@ h1 {
 
 .table-wrapper::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb-color);
-  border-radius: 6px;
+  border-radius: var(--border-radius-medium);
   border: 3px solid var(--scrollbar-bg-color);
 }
 
@@ -462,7 +489,7 @@ h1 {
 .download-link {
   color: #00FFFF;
   text-decoration: none;
-  margin-right: var(--spacing-sm);
+  margin-right: var(--spacing-small);
 }
 
 .download-link:hover {
