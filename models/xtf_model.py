@@ -5,11 +5,13 @@ import logging
 class XTFParser:
     @staticmethod
     def round_down_to_nearest_10(value):
+        # Round down the value to the nearest multiple of 10
         if math.isinf(value):
             return value
         return math.floor(value / 10) * 10
-    
+
     def safe_float(self, value):
+        # Safely convert a value to a float
         if value is None or value == '':
             return None
         try:
@@ -23,6 +25,7 @@ class XTFParser:
             return None
 
     def safe_int(self, value):
+        # Safely convert a value to an integer
         if value is None or value == '':
             return None
         try:
@@ -32,6 +35,7 @@ class XTFParser:
             return None
 
     def parse(self, xtf_file_path, config):
+        # Parse the XTF file and extract data based on the provided configuration
         try:
             tree = ET.parse(xtf_file_path)
         except ET.ParseError as e:
@@ -41,6 +45,7 @@ class XTFParser:
         root = tree.getroot()
         namespace = {'ili': 'http://www.interlis.ch/INTERLIS2.3'}
 
+        # Extract default values from the configuration
         default_sohlenkote = config['default_sohlenkote']
         default_durchmesser = config['default_durchmesser']
         default_hoehe = config['default_hoehe']
@@ -49,9 +54,11 @@ class XTFParser:
         default_rohrdicke = config['default_rohrdicke']
         einfaerben = config['einfaerben']
 
+        # Identify the model used in the XTF file
         model = self.identify_model(root, namespace)
         logging.info(f"Identified model: {model}")
 
+        # Initialize data structures to hold parsed information
         data = {
             'abwasserknoten': [],
             'haltungspunkte': [],
@@ -94,6 +101,7 @@ class XTFParser:
             raise
 
         try:
+            # Calculate minimum coordinates from the parsed data
             min_x, min_y, min_z = self.find_min_coordinates(data)
             if any(math.isinf(coord) for coord in (min_x, min_y, min_z)):
                 logging.error(f"Ungültige Mindestkoordinaten gefunden: x={min_x}, y={min_y}, z={min_z}")
@@ -110,12 +118,14 @@ class XTFParser:
                 'error': f"Failed to calculate minimum coordinates: {str(e)}"
             }
 
+        # Update data with configuration and model information
         data.update(config)
         data['model'] = model
 
         return data
 
     def identify_model(self, root, namespace):
+        # Identify the model used in the XTF file based on known paths
         model_paths = [
             ('.//ili:DSS_2020_LV95.Siedlungsentwaesserung', 'DSS_2020_LV95'),
             ('.//ili:SIA405_ABWASSER_2015_LV95.SIA405_Abwasser', 'SIA405_ABWASSER_2015_LV95'),
@@ -130,12 +140,14 @@ class XTFParser:
         return "GENERIC"
 
     def get_element_text(self, element, tag, namespace):
+        # Retrieve text from a specific XML element
         found_element = element.find(tag, namespace)
         if found_element is not None and found_element.text is not None:
             return found_element.text
         return ''
 
     def parse_coordinates(self, element, namespace):
+        # Parse coordinate values from an element
         c1 = element.find('ili:C1', namespace)
         c2 = element.find('ili:C2', namespace)
         if c1 is not None and c2 is not None:
@@ -146,6 +158,7 @@ class XTFParser:
         return None
 
     def parse_abwasserknoten(self, root, namespace, default_sohlenkote, default_durchmesser, default_hoehe, model):
+        # Parse sewer nodes (abwasserknoten) from the XTF file
         logging.info(f"Starting to parse sewer nodes for model: {model}")
         abwasserknoten_data = []
         haltungspunkt_sohlenkoten = {}
@@ -201,6 +214,7 @@ class XTFParser:
         return abwasserknoten_data, haltungspunkt_sohlenkoten
 
     def parse_normschachte(self, root, namespace, abwasserknoten_data, haltungspunkte, default_durchmesser, default_hoehe, default_sohlenkote, model):
+        # Parse norm shafts (normschachte) from the XTF file
         logging.info(f"Starting to parse norm shafts for model: {model}")
         normschachte = []
         nicht_verarbeitete_normschachte = []
@@ -268,6 +282,7 @@ class XTFParser:
                 else:
                     zugehoerige_haltungspunkte = [hp for hp in haltungspunkte if hp['lage']['c1'] and hp['lage']['c2'] and normschacht_id in hp['id']]
                     if len(zugehoerige_haltungspunkte) >= 2:
+                        # Calculate the midpoint if there are associated haltungspunkte
                         mittelpunkt_c1 = sum(self.safe_float(hp['lage']['c1']) for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
                         mittelpunkt_c2 = sum(self.safe_float(hp['lage']['c2']) for hp in zugehoerige_haltungspunkte) / len(zugehoerige_haltungspunkte)
                         normschachte.append({
@@ -293,6 +308,7 @@ class XTFParser:
         return normschachte, nicht_verarbeitete_normschachte
 
     def parse_haltungspunkte(self, root, namespace, default_sohlenkote, model):
+        # Parse haltungspunkte from the XTF file
         logging.info(f"Starting to parse haltungspunkte for model: {model}")
         haltungspunkte = []
 
@@ -340,6 +356,7 @@ class XTFParser:
         return haltungspunkte
 
     def find_min_coordinates(self, data):
+        # Find minimum x, y, z coordinates from the data
         min_x = float('inf')
         min_y = float('inf')
         min_z = float('inf')
@@ -368,6 +385,7 @@ class XTFParser:
         return min_x, min_y, min_z
 
     def parse_haltungen(self, root, namespace, haltungspunkte, default_sohlenkote, model):
+        # Parse haltungen from the XTF file
         logging.info(f"Starting to parse haltungen for model: {model}")
         haltungen = []
         nicht_verarbeitete_haltungen = []
@@ -438,6 +456,7 @@ class XTFParser:
         return haltungen, nicht_verarbeitete_haltungen
 
     def parse_kanale(self, root, namespace, model):
+        # Parse channels (kanale) from the XTF file
         logging.info(f"Starting to parse channels for model: {model}")
         kanale = []
         nicht_verarbeitete_kanale = []
