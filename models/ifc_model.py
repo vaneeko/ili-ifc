@@ -62,6 +62,7 @@ def create_ifc_project_structure(ifc_file, min_coordinates):
     return context, site
 
 def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point_y):
+    # Interpolate the Z-coordinate based on the position along the line
     total_distance = math.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
     point_distance = math.sqrt((point_x - start_x)**2 + (point_y - start_y)**2)
     if total_distance != 0:
@@ -71,6 +72,7 @@ def interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, point_x, point
         return start_z
 
 def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group):
+    # Create IFC representations of 'haltungen' (pipelines)
     haltungen = data['haltungen']
     default_durchmesser = data['default_durchmesser']
     default_rohrdicke = data['default_rohrdicke']
@@ -99,6 +101,7 @@ def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group):
         ifc_local_placement = create_local_placement(ifc_file, [start_x, start_y, start_z], relative_to=site.ObjectPlacement)
 
         if 'verlauf' in haltung and haltung['verlauf']:
+            # Generate a 3D polyline for the pipeline's path
             polyline_3d = []
             for point in haltung['verlauf']:
                 x = float(point['c1']) - start_x
@@ -109,6 +112,7 @@ def create_ifc_haltungen(ifc_file, data, site, context, haltungen_group):
                     z = interpolate_z(start_z, end_z, start_x, start_y, end_x, end_y, float(point['c1']), float(point['c2'])) - start_z
                 polyline_3d.append([x, y, z])
         else:
+            # Default to a straight line between start and end points
             polyline_3d = [
                 [0.0, 0.0, 0.0],
                 [end_x - start_x, end_y - start_y, end_z - start_z]
