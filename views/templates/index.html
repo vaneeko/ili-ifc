@@ -8,8 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <h1 id="xtf-to-ifc-converter" class="text-shadow">XTF to IFC Converter</h1>
-        
+        <h1 id="xtf-to-ifc-converter" class="text-shadow">XTF to IFC Converter</h1>       
         <div class="content-wrapper">
             <div class="left-column">
                 <div class="section card">
@@ -17,8 +16,8 @@
                     <div class="card-content">
                         <div id="file-preview-wrapper">
                             <div class="file-input-wrapper">
-                                <input type="file" id="xtfFiles" name="xtfFiles" multiple accept=".xtf">
-                                <button class="custom-file-input">Dateien auswählen</button>
+                                <input type="file" id="xtfFiles" name="xtfFiles" multiple accept=".xtf" style="display: none;">
+                                <label for="xtfFiles" class="pixel-button">Dateien auswählen</label>
                             </div>
                         </div>
                         <div id="preview-container"></div>
@@ -26,21 +25,47 @@
                     </div>
                 </div>
 
-                <div class="section card">
-                    <h2 id="configuration" class="card-header">Configuration</h2>
+                <div id="alert-overlay" class="alert-overlay">
+                    <div class="alert-box">
+                      <p>Dieser Service läuft im Test-Modus. Es dürfen NUR öffentliche Daten hochgeladen werden. KEINE internen, vertraulichen oder geheime Daten.</p>
+                      <button id="alert-close" class="alert-close">Verstanden</button>
+                    </div>
+                  </div>
+
+                  <div class="section card">
+                    <h2 id="configuration" class="card-header">Defaults</h2>
                     <div class="card-content">
-                        <input type="number" id="default_sohlenkote" class="pixel-input" placeholder="Default Sohlenkote" value="405.0">
-                        <input type="number" id="default_durchmesser" class="pixel-input" placeholder="Default Durchmesser" value="0.8">
-                        <input type="number" id="default_hoehe" class="pixel-input" placeholder="Default Höhe" value="0.8">
-                        <input type="number" id="default_wanddicke" class="pixel-input" placeholder="Default Wanddicke" value="0.04">
-                        <input type="number" id="default_bodendicke" class="pixel-input" placeholder="Default Bodendicke" value="0.02">
-                        <input type="number" id="default_rohrdicke" class="pixel-input" placeholder="Default Rohrdicke" value="0.02">
+                        <div class="form-group">
+                            <label for="default_sohlenkote">Schacht Sohlenkote (m)</label>
+                            <input type="number" id="default_sohlenkote" class="pixel-input" value="405.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="default_durchmesser">Schacht Durchmesser (m)</label>
+                            <input type="number" id="default_durchmesser" class="pixel-input" value="0.8">
+                        </div>
+                        <div class="form-group">
+                            <label for="default_hoehe">Schacht Höhe (m)</label>
+                            <input type="number" id="default_hoehe" class="pixel-input" value="0.8">
+                        </div>
+                        <div class="form-group">
+                            <label for="default_wanddicke">Schacht Wandstärke (m)</label>
+                            <input type="number" id="default_wanddicke" class="pixel-input" value="0.04">
+                        </div>
+                        <div class="form-group">
+                            <label for="default_bodendicke">Schacht Bodenstärke (m)</label>
+                            <input type="number" id="default_bodendicke" class="pixel-input" value="0.02">
+                        </div>
+                        <div class="form-group">
+                            <label for="default_rohrdicke">Rohr Wandstärke (m)</label>
+                            <input type="number" id="default_rohrdicke" class="pixel-input" value="0.02">
+                        </div>
                         <div class="checkbox-container">
                             <input type="checkbox" id="einfaerben" class="form-checkbox">
-                            <label for="einfaerben">Datenvollständigkeit farblich visualisieren</label>
+                            <label for="einfaerben">Verwendete Defaultwerte farblich in IFC visualisieren</label>
                         </div>
                     </div>
                 </div>
+                
 
                 <div class="section card">
                     <h2 id="ausgabe" class="card-header">Ausgabe</h2>
@@ -54,11 +79,13 @@
                 <div class="section card">
                     <h2 id="switch-theme" class="card-header">Switch Theme</h2>
                     <div class="card-content switch-theme-buttons">
-                        <button class="pixel-button" data-theme="styles1.css">Pixelart</button>
-                        <button class="pixel-button" data-theme="styles2.css">Dark</button>
-                        <button class="pixel-button" data-theme="styles3.css">Rainbow</button>
                         <button class="pixel-button" data-theme="styles4.css">Modern</button>
                         <button class="pixel-button" data-theme="styles5.css">Modern Dark</button>
+                        <!--
+                        <button class="pixel-button" data-theme="styles1.css">Pixelart</button>
+                        <button class="pixel-button" data-theme="styles2.css">Dark</button>
+                        -->
+                        <button class="pixel-button" data-theme="styles3.css">Rainbow</button>
                     </div>
                 </div>
             </div>
@@ -76,7 +103,7 @@
     </div>
 
     <footer class="footer">
-        <p>2024 · Martin Vanek</p>
+        <p>2024 · V0.2 (pre-alpha) · Martin Vanek</p>
     </footer>
 
     <script src="/static/js/converter.js"></script>
